@@ -8,6 +8,4 @@
 *.md
 *.Rproj
 !README.md
-*._files
-._libs
-/.quarto/
+/literature
