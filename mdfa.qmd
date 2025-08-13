@@ -101,7 +101,7 @@ Computationally the problem is to define what is meant by
 "approximately" and to find a technique that produces an
 approximate solution. Typically this is done by defining a
 non-negative loss function that measures departure from perfect fit and
-minimizing it. 
+an algrotihm for minimizing it. 
 
 In *Common Factor Analysis (CFA)*, which is the most important special case of 
 factor analytic decomposition, the set $\mathcal{A}$ is the set of
@@ -139,6 +139,8 @@ X'X&=AA',\label{eq-pfa1}\\
 A&\in\mathcal{A}.\label{eq-pfa2}
 \end{align}
 \end{subequations}
+Solvability of the rerduced system is a necessary condition for solvability
+of the full system \eqref{eq-fa1}-\eqref{eq-fa3}.
 Most factor analysis procedures are two-step methods. In the first step they find
 an approximate solution $A$ to the reduced system, and then use this 
 $A$ to find an approximate solution $Y$ to the full system. The two steps may 
@@ -254,7 +256,7 @@ The fundamental theorem implies that for any solution $A\in\mathcal{A}$ of $X'X=
 
 # Least Squares Factor Analysis
 
-There are several factor analytic decomposition techniques that use least squares loss functions. The oldest one is, in the general case and for CFA,
+There are several factor analytic decomposition techniques that use least squares loss functions. The oldest one is, first in the general case and then for CFA,
 \begin{subequations}
 \begin{align}
 \sigma(A)&=\text{SSQ}(X'X-AA'),\label{eq-minres1}\\
