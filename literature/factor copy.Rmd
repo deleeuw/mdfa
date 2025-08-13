@@ -1,0 +1,353 @@
+---
+title: 'Factor Analysis as Matrix Decomposition and Approximation: Theory'
+author: "Jan de Leeuw"
+date: "Version 96, May 05, 2017"
+output:
+  pdf_document:
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+fontsize: 12pt
+graphics: yes
+bibliography: ["mypubs.bib","total.bib"]
+abstract: A general form of linear factor analysis is defined, and presented as a
+  method to factor a data matrix, similar in many respects to principal component
+  analysis. We discuss necessary and sufficient conditions for solvability of the
+  factor analysis equations and give a constructive method to compute all solutions.
+  A follow up paper will present the corresponding algorithm.
+---
+<style type="text/css">
+
+body{ /* Normal  */
+   font-size: 18px;
+}
+td {  /* Table  */
+   font-size: 18px;
+}
+h1 { /* Header 1 */
+ font-size: 28px;
+ color: DarkBlue;
+}
+h2 { /* Header 2 */
+ font-size: 22px;
+ color: DarkBlue;
+}
+h3 { /* Header 3 */
+ font-size: 18px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 18px;
+}
+pre { /* Code block */
+  font-size: 18px
+}
+</style>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { equationNumbers: { autoNumber: "AMS" } }
+});
+</script>
+
+```{r function_code, echo = FALSE}
+#source("deboor.R")
+```
+```{r packages, echo = FALSE}
+options (digits = 10) 
+library (captioner)
+mprint <- function (x,
+                    d = 6,
+                    w = 8,
+                    f = "") {
+  print (noquote (formatC (
+    x,
+    di = d,
+    wi = w,
+    fo = "f",
+    flag = f
+  )))
+}
+```
+```{r equation_numbering, echo = FALSE}
+figure_nums <- captioner (prefix = "Figure")
+theorem_nums <- captioner (prefix = "Theorem")
+lemma_nums <- captioner (prefix = "Lemma")
+corollary_nums <- captioner (prefix = "Corollary")
+theorem_nums (name = "necessary", caption = "[Necessary]", display = FALSE)
+theorem_nums (name = "least_squares", caption ="[Least_Squares]", display =- FALSE)
+theorem_nums (name = "fundamental", caption = "[Fundamental]", display = FALSE)
+theorem_nums (name = "procrustus", caption = "[Procrustus]", display = FALSE)
+lemma_nums (name = "crossproduct", caption = "[Crossproduct]", display = FALSE)
+```
+Note: This is a working paper which will be expanded/updated frequently. All suggestions for improvement are welcome. The directory [deleeuwpdx.net/pubfolders/factor](http://deleeuwpdx.net/pubfolders/factor) has a pdf version, the complete Rmd file with all code chunks, and the bib file.
+
+# Introduction
+
+**Problem:** Suppose $X$ is an $n\times m$ real matrix. Suppose $\mathcal{H}$ is a subset of $\mathbb{R}^{p\times p}$ and $\mathcal{S}$ is a subset of $\mathbb{R}^{m\times p}$. We want to find the solutions of the equation $X=FS'$, with the $n\times p$ matrix $F$ of *factor scores* such that $F'F$ is in $\mathcal{H}$ and the $m\times p$ matrix $S$ of *factor loadings* in $\mathcal{S}$.
+
+For reference purposes we repeat our general *factor analysis model*.
+\begin{align}
+X&=FS',\label{E:FA-1}\\
+F'F&=H,\label{E:FA-2}\\
+H&\in\mathcal{H}\subseteq\mathbb{R}^{p\times p},\label{E:FA-3}\\
+S&\in\mathcal{S}\subseteq\mathbb{R}^{m\times p}.\label{E:FA-4}
+\end{align}
+Note that we do not require that $p\leq\min(m,n)$ or even $p=\mathbf{rank}(X)$. The interesting case is $p>m$, more factors than variables. There is also no requirement that $n\geq m$, by the way.
+
+In classical *exploratory orthogonal common factor analysis* we require $H=I$ and $S=\begin{bmatrix}S_1&\mid&S_2\end{bmatrix}$ with the $m\times m$ matrix $S_2$ diagonal. The
+$m\times(p-m)$ matrix $S_1$ has the *common factor loadings*. In *confirmatory common factor analysis* we keep the basic structure of $\mathcal{S}$ but we may fix some loadings at fixed and known values, mostly zero. In non-orthogonal versions of common factor analysis we allow for non-zero elements in $H$, usually to model correlations between common factors.
+
+In this paper we rederive some of the basic algebraic results for factor analysis. These results, in various forms and disguises, can be found in many places, starting with @wilson_28 and culminating -- at least for me -- in @guttman_55. I desperately needed some clarity after reading much of the factor indeterminacy literature, which -- at least for me --  has a light-to-heat ratio close to zero. I admire @steiger_schoenemann_78 and @steiger_79 for going through half a century of clunky notation, polemics, scientific denial, and doubtful results.
+
+Our proofs are based on powerful matrix decomposition tools, the *singular value decomposition* and the *eigenvalue decomposition*. This makes our proofs quite different from what one normally finds, especially in the older literature. Matrix algebra has come a long way. 
+
+# Two Steps
+
+Instead of directly tackling the problem of solving equations $\eqref{E:FA-1}-\eqref{E:FA-4}$ we proceed in two steps. We first give a trivial necessary condition for solvability, which has been important throughout the history of factor analysis.
+
+**`r theorem_nums ("necessary")`**
+If $S$ and $F$ solve $\eqref{E:FA-1}-\eqref{E:FA-2}$ then $X'X=SHS'$.
+
+**Proof:** Duh. **QED**
+
+As we shall see in a moment, the condition $X'X=SHS'$ is also sufficient for solvability of $\eqref{E:FA-1}-\eqref{E:FA-2}$, and consequently $\eqref{E:FA-1}-\eqref{E:FA-4}$ is solvable
+if and only if 
+\begin{align}
+X'X&=SHS',\label{E:CA-1}\\
+S&\in\mathcal{S},\label{E:CA-2}\\
+H&\in\mathcal{H}\label{E:CA-3}.
+\end{align}
+Of course it does not follow that conditions $\eqref{E:CA-1}-\eqref{E:CA-3}$ determine
+$S$ and $H$ uniquely. Because of the generality of our constraints on $S$ and $H$ it is
+quite useless to look for identification conditions.
+
+The usual approach in factor analysis theory is to first solve
+$\eqref{E:CA-1}-\eqref{E:CA-3}$ for $S$ and $H$, and then find all $F$ for which $X=FS'$
+and $F'F=H$. The fact that such an $F$ always exists if $\eqref{E:CA-1}-\eqref{E:CA-3}$
+are solvable is sometimes called the *Fundamental Theorem of Factor Analysis* (@kestelman_52).
+The fact that there are usually multiple solutions for $F$ to $X=FS'$ and $F'F=H$ for given $S$ and $H$ that solve $\eqref{E:CA-1}-\eqref{E:CA-3}$ is called the *Factor Score Indeterminacy Problem*.
+
+In factor analysis computation a similar two step process is followed. First an approximate
+solution to $\eqref{E:CA-1}-\eqref{E:CA-3}$ is computed, using multinormal maximum likelihood or least squares. This gives an $S\in\mathcal{S}$ and an $H\in\mathcal{H}$. Then, in the
+second step, we compute an approximate solution to $X=FS'$ and $F'F=H$, using $S$ and $H$
+from the first step. This is sometimes called *Factor Score Estimation*. 
+
+# Least Squares 
+
+In this paper we study only the second step only. We assume we have some $S$ and $H$ that may or may not satisfy $\eqref{E:CA-1}-\eqref{E:CA-3}$. Then find an expression for all $F$ with $F'F=H$ that minimize 
+\begin{equation}\label{E:LS}
+\sigma(F)=\mathbf{tr}\ (X-FS')'(X-FS'). 
+\end{equation}
+This is "factor score estimation". We
+then look into conditions for which the minimum of the least squares loss function $\sigma$ 
+is zero. Those conditions give us the "fundamental theorem of factor analysis". And finally
+if the minimum of $\sigma$ is zero the set of all solutions defines the "factor score indeterminacy problem".
+
+**`r lemma_nums ("crossproduct")`**
+If the $p\times p$ positive semi-definite matrix $H$ of rank $s$ has eigenvalue decomposition
+\begin{equation}\label{E:H}
+H=\begin{bmatrix}N&N_\perp\end{bmatrix}\begin{bmatrix}\Phi^2&\emptyset\\
+\emptyset &\emptyset\end{bmatrix}\begin{bmatrix}N'\\N_\perp'\end{bmatrix},
+\end{equation}
+with the $s\times s$ diagonal matrix $\Phi^2$ positive definite,
+then the $n\times p$ matrix $F$ satisfies $F'F=H$ if and only if $F$ has singular value decomposition $F=T\Phi N'$, with some $n\times s$ matrix $T$ with $T'T=I$. 
+
+**Proof:**
+Write $F$ in the form 
+\begin{equation}\label{E:F}
+F=\begin{bmatrix}A&B\end{bmatrix}\begin{bmatrix}N'\\N_\perp'\end{bmatrix}.
+\end{equation}
+Then $F'F=H$ if and only if
+$$
+\begin{bmatrix}
+A'A&A'B\\B'A&B'B
+\end{bmatrix}=\begin{bmatrix}\Phi^2&0\\0&0\end{bmatrix}.
+$$
+Thus $F'F=H$ if and only if $B=0$ and $A'A=\Phi^2$, which can be written as $A=T\Phi$ with $T'T=I$.
+**QED**
+
+**`r theorem_nums ("least_squares")`**
+Suppose $X$ is an $n\times m$ matrix, $S$ is an $m\times p$ matrix , and $H$ is a positive semi-definite $p\times p$ matrix of rank $s$ with eigenvalue decomposition
+$\eqref{E:H}$. Define the $n\times s$ matrix $R=XSN\Phi$ and suppose
+\begin{equation}\label{E:R}
+R=\begin{bmatrix}P&P_\perp\end{bmatrix}\begin{bmatrix}\Psi&0\\0&0\end{bmatrix}\begin{bmatrix}Q'\\Q_\perp'\end{bmatrix} 
+\end{equation}
+is a singular value decomposition of $R$ and rank $R$ is $r$. The minimum of $\mathbf{tr}\ (X-FS')'(X-FS')$ over the $n\times p$ matrices $F$ that satisfy $F'F=H$ is
+\begin{equation}\label{E:ls}
+\min_{F'F=H}\mathbf{tr}\ (X-FS')'(X-FS')=\mathbf{tr}\ X'X+\mathbf{tr}\ SHS'-2\ \mathbf{tr}\ \Psi
+\end{equation}
+and the minimum is attained at any $F$ with singular value decomposition
+\begin{equation}\label{E:FF}
+F=(PQ'+P_\perp^{\ }DQ_\perp')\Phi N',
+\end{equation}
+where the $(n-r)\times(s-r)$ matrix $D$ satisfies $D'D=I$ but is otherwise arbitrary.
+
+**Proof:**
+It follows from lemma `r lemma_nums("crossproduct", display = "n")` that minimizing the sum of
+squares is equivalent to maximizing $\mathbf{tr}\ T'R$ over $T'T=I$. Let
+$$
+T=\begin{bmatrix}P&P_\perp\end{bmatrix}\begin{bmatrix}A&B\\C&D\end{bmatrix}\begin{bmatrix}Q'\\Q_\perp'\end{bmatrix}
+$$
+Then $\mathbf{tr}\ T'R=\mathbf{tr}\ A'\Psi$ while $T'T=I$ when
+$$
+\begin{bmatrix}
+A'A+C'C&A'B+C'D\\
+B'A+D'C&B'B+D'D
+\end{bmatrix}=\begin{bmatrix}I&0\\0&I\end{bmatrix}.
+$$
+The maximum $\mathbf{tr}\ A'\Psi$ over $A'A\lesssim I$ is equal to $\mathbf{tr}\ \Psi$ and is attained (uniquely) for $A=I$, which means that $C=0$ and $B=0$. Thus
+$$
+T=PQ'+P_\perp^{\ }DQ_\perp',
+$$
+and $F$ has singular value decomposition
+$$
+F=(PQ'+P_\perp^{\ }DQ_\perp')\Phi N'
+$$
+where $D'D=I$.
+**QED**
+
+# Fundamental Theorem
+
+**`r theorem_nums("fundamental")`** 
+
+1. If $X\in\mathbb{R}^{n\times m}$, $S\in\mathbb{R}^{m\times p}$ and $F\in\mathbb{R}^{n\times p}$ and $H\in\mathbb{R}^{p\times p}$ satisfy $X=FS'$ and $F'F=H$ then $X'X=SHS'$. 
+2. If $X\in\mathbb{R}^{n\times m}$, $S\in\mathbb{R}^{m\times p}$ and $H\in\mathbb{R}^{p\times p}$ satisfy $X'X=SHS'$ then there is an $F\in\mathbb{R}^{n\times p}$ such that $X=FS'$ and $F'F=H$.
+
+**Proof:**
+Part 1 is just a restatement of theorem `r theorem_nums("necessary", display = "n")`.
+To prove part 2, we show that the minimum least squares loss is zero if and only if $X'X=SHS'$. If $X'X=SHS'$ then $RR'=XSHS'X'=(XX')^2$. Thus the singular values
+of $R$ are the same as the singular values of $X'X$ and those of $SHS'$, and from $\eqref{E:ls}$ we find that minimum loss is zero. Conversely, if minimum loss is zero there is an $F$ with $X=FS'$ and $F'F=H$ and thus $X'X=SHS'$.
+**QED**
+
+# Quantifying Indeterminacy
+
+For two different choices $D_1$ and $D_2$ of $D$ in $\eqref{E:FF}$ we have
+$$
+\Phi^{-1}N'F_1'F_2^{\ }N\Phi^{-1}=PP'+P_\perp^{\ }D_1'D_2^{\ }P_\perp'.
+$$
+Thus the canonical correlations of $F_1$ and $F_2$ are
+the $s-r$ singular values of $D_1'D_2^{\ }$, in addition to $r$ canonical correlations equal to one. Because $D_1'D_2^{\ }\gtrsim -I$ we see
+that 
+$$
+\Phi^{-1}N'F_1'F_2^{\ }N\Phi^{-1}\gtrsim PP'-P_\perp^{\ }P_\perp'=I-2P_\perp^{\ }P_\perp'=2PP'-I,
+$$
+and thus $\mathbf{tr}\ \Phi^{-1}N'F_1'F_2^{\ }N\Phi^{-1}\geq 2r-s$, a result due to @schoenemann_71 in classical exploratory factor analysis.
+In that case we have $p=s=m+c$, with $c$ the number of common factors, and $r=m$. Thus $2r-s=m-c$ and the average correlation between
+corresponding factors in two solutions is $(1-c/m)/(1+c/m)$.
+
+# Example
+
+Our example is completely fictional, but it does illustrate some of the computations, even in the case where there are singularities. In factor analytic terminology, it has some correlated common factors and some correlated unique factors. The matris $S$ is
+
+```{r make_s, echo = FALSE}
+s <- matrix(0, 6, 10)
+s[1:3,1] <- 1:3
+s[4:6,2] <- -(1:3)
+s[1,3]<-1
+s[6,4]<-1
+s[1:6,5:10] <- diag(c(1:3,3:1))
+s
+```
+
+and the matrix $H$ is
+
+```{r make_h, echo = FALSE}
+h<-matrix(0,10,10)
+r<-matrix(c(1,-1,-1,1),2,2)
+h[1:2,1:2]<-r
+h[3:4,3:4]<-diag(2)
+h[5:6,5:6]<-diag(2)
+h[7:8,7:8]<-diag(2)
+h[9:10,9:10]<-r
+h
+```
+Matrix $S$ has rank 6 and $H$ has rank $8$ (two eigenvalues equal to two, six eigenvalues equal to one, two eigenvalues equal to zero). Eigenvalue decomposition of $H$ defines $N$ and $\Phi$.
+
+```{r h_eigen, echo = FALSE}
+e <- eigen(h)
+n <- e$vectors[,1:8]
+phi <- e$values[1:8]
+```
+Thus $SHS'$ is
+```{r make_w, echo = FALSE}
+w<-s%*%h%*%t(s)
+w
+```
+with a trace equal to `r sum(diag(w))`.
+We fill a $30\times 6$ matrix $X$ with random normal deviates and compute $R=XSN\Phi$.
+```{r make_r, echo = FALSE}
+set.seed(12345)
+xxx<-matrix(rnorm(180), 30, 6)
+ex <- svd (xxx)
+r<- xxx%*%s%*%n%*%diag(sqrt(phi))
+er <- svd (r)
+p <- er$u[,1:6]
+pperp <- qr.Q(qr(cbind(p,diag(30))))[,7:30]
+q <- er$v[,1:6]
+qperp <-er$v[,7:8]
+```
+The sum of squares of $X$ is `r sum(xxx^2)`, and the trace norm of $R$ (sum of singular values) is `r sum (er$d)`, which means minimum least squares loss is `r sum(diag(w))+sum(xxx^2)-2*sum(er$d)`.
+
+We can now use $\eqref{E:FF}$ to construct $F$. Choose the $24\times 2$ matrix $D$ by
+```{r make_d}
+d <- matrix (0, 24, 2)
+diag (d) <- 1
+```
+The corresponding $F$ is
+```{r make_f, echo = FALSE}
+f <- tcrossprod ((tcrossprod(p, q) + tcrossprod(pperp%*%d, qperp))%*%diag(sqrt(phi)), n)
+e1 <- formatC(max(abs(h-crossprod(f))), format = "e")
+e2 <- sum((xxx-f%*%t(s))^2)
+```
+Using the sup-norm we find $\|H-F'F\|_\infty$ equal to `r e1` and $\mathbf{tr}(X-FS')'(X-FS')$ equal to `r e2`.
+
+Now we cheat a bit and simply make an $X$ such that $X'X=SHS'$. We use a $30\times 30$ matrix of standard normals, orthonormalize it
+with `qr()`, and take the first 6 columns as $K$ and the last 24 as $K_\perp$. Then $\Lambda$ and $L$ are taken from the eigenvalue decomposition of $SHS'$. 
+```{r make_x, echo = FALSE}
+f<-eigen(w)
+lbd<-sqrt(f$values[1:6])
+lll<-f$vectors[,1:6]
+set.seed(12345)
+kkk<-qr.Q(qr(matrix(rnorm(690),30,30)))
+k<-kkk[,1:6]
+kp<-kkk[,7:30]
+xxx<-k%*%diag(lbd)%*%t(lll)
+```
+```{r make_rr, echo = FALSE}
+r <- xxx%*%s%*%n%*%diag(sqrt(phi))
+er <- svd (r)
+p <- er$u[,1:6]
+pperp <- qr.Q(qr(cbind(p,diag(30))))[,7:30]
+q <- er$v[,1:6]
+qperp <-er$v[,7:8]
+```
+```{r make_ff, echo = FALSE}
+f <- tcrossprod ((tcrossprod(p, q) + tcrossprod(pperp%*%d, qperp))%*%diag(sqrt(phi)), n)
+e1 <- formatC(max(abs(h-crossprod(f))), format = "e")
+e2 <- formatC(max(abs(xxx-f%*%t(s))), format = "e")
+```
+The sum of squares of $X$ and the trace norm of $R$ are both `r sum (er$d)`, which means minimum least squares loss is zero.
+With the same $D$ as before we use $\eqref{E:FF}$ to construct $F$. 
+Again $\|H-F'F\|_\infty$ is equal to `r e1` and now $\|X-FS'\|_\infty$ is equal to `r e2`.
+
+# And Now ... For Our Next Act
+
+In the second part of this paper we will discuss an algorithm in R that minimizes $\eqref{E:LS}$ over $S\in\mathcal{S}$, $H\in\mathcal{H}$ and $F$ with $F'F=H$. This
+is a one-step algorithm, in the sense that we construct $S, H$ and $F$ simultaneously.
+Clearly choice of $\mathcal{S}$ and $\mathcal{H}$ is critical here. In fact, we will
+modify the problem somewhat so that we minimize
+$$
+\sigma(F,H,S)=\mathbf{tr}(X-FHS')'(X-FHS'),
+$$
+where we require $F'F=I$ and $H\in\mathcal{H}$. Both $\mathcal{S}$ and $\mathcal{H}$
+are defined by elementwise box constraints, which include the extreme cases of no
+constraint and constrained to be a fixed real number.
+
+
+# References
