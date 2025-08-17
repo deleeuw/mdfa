@@ -234,7 +234,7 @@ where $V$ satisfies $V'V=I$, but is otherwise arbitrary.
 
 From \eqref{eq-writey} and \eqref{eq-solves} we see that
 \begin{equation}
-Y=K_1M_1'+K_0VM_0'
+Y=K_1M_1'+K_0VM_0'\label{eq-yperf}
 \end{equation}
 provides us with the required solution of the full system.
 
@@ -252,11 +252,18 @@ The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT
 
 # Least Squares Factor Analysis
 
+## MINRES
+
 There are several factor analytic decomposition techniques that use least squares loss functions. The oldest and most obvious one is
 \begin{equation}
-\sigma(T)=\text{SSQ}(C-TT').\label{eq-minres}
+\sigma(T)=\text{SSQ}(C-TT'),\label{eq-minres}
 \end{equation}
-An alternating least squares technique to minimize \eqref{eq-minres} in the case of CFA was first proposed by @thomson_34. It alternates minimizing the loss function over $D$ for the current $F$ and minimizing over $F$ for the current $D$. Of course this only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minres}
+where $\text{SSQ}()$ stands for ther unweighted sum of squares.
+For CFA \eqref{eq-minres} becomes
+\begin{equation}
+\sigma(T)=\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
+\end{equation}
+An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course this only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa}
 are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_69 and @joreskog_vanthillo_71.
 
 Also for CFA @young_40 and @whittle_52 propose minimizing the weighted least 
@@ -275,7 +282,9 @@ This technique actually corresponds to alternating minimization of the loss func
 \begin{equation}
 \sigma(A,F,D)=n\log\text{det}(D^2)+\text{tr}\ (X-FA')D^{-2}(X-FA')'.\label{eq-lawley41}
 \end{equation}
-But \eqref{eq-lawley41} is the negative maximum likelihood loss function of @lawley_41, and we know it is unbounded below, does not have a minimum, and converges to a solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
+But \eqref{eq-lawley41} is the negative maximum likelihood loss function for the fixed factor model from @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
+
+## MDFA
 
 A more direct way of fitting the full CFA model was discussed (independently and around the same time) in the dissertation of @socan_03 and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as Matrix Decomposition Factor analysis (MDFA). Socan attributes MDFA (which they call *Direct Factor Analysis*) to a 2001 personal communication and some unpublished notes of his advisor Henk Kiers.
 
@@ -284,12 +293,16 @@ In MDFA the least squares loss function is
 \sigma(Y,A):=\text{SSQ}(X-YT'),\label{eq-lossdef}
 \end{equation}
 which must be minimized over $Y'Y=I$ and $T\in\mathcal{T}$.
-MDFA was not immediately accepted as an alternative factor analysis technique. It made its first journal appearance in a series of papers by Steffen Unkel and Nickolay T. Trendafilov, based largely on Unkel's dissertation (@unkel_09). Over the years they contributed a "robust"
-version of MDFA and a version for a "wide" data matrux $X$ (@trendafilov_unkel_11)
-There is a nice review of these contributions in @unkel_trendafilov_10. 
-@trendafilov_unkel_krzanowski_13
+MDFA was not immediately accepted as an alternative factor analysis technique. It made its first journal appearance in a series of papers by Unkel and Trendafilov, based largely on Unkel's dissertation (@unkel_09). Over the years they contributed a "robust"
+version of MDFA and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11)
+There is a nice review of these contributions in @unkel_trendafilov_10, with an update in
+@trendafilov_unkel_krzanowski_13.
 
-In the thesis of Socan a variation of MDFA is discussed in which it is required, in addition to , that $U'X$ is diagonal. @stegeman_16 *Data Factor Model*
+In the thesis of Socan a variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the version of MDFA in @stegeman_16, which they call the *Data Factor Model*,
+it is even required that $U'X=D$. In the case of perfect fit the constraint $U'X=D$ is automatically
+satisfied, but it will not be so for the least squares fit. These additional constraints
+on MDFA complicate the ALS algorithm and take us in the direction of alternative methods for 
+computing factor scores. We do not impose those constraints in this paper.
 
 K. Adachi contributed some useful results to what they initially called *Data-Fitting Factor Analysis*. @adachi_12, @adachi_trendafilov_18
 
@@ -310,18 +323,18 @@ the optimum $Y$ for given $T$ and the optimum $T$ for given $Y$.
 Finding the optimum $T$ for given $Y$ is  straightforward.
 We complete the square, as in
 \begin{multline}
-\sigma(Y,A)=\text{tr}\ C+\text{tr}\ A'A-2\text{tr}\ Y'XA=\\
+\sigma(Y,T)=\text{tr}\ C+\text{tr}\ T'T-2\text{tr}\ Y'XT=\\
 \text{tr}\ C+\text{tr} (T-X'Y)'(T-X'Y)-\text{tr}\ Y'CY.
 \end{multline}
 Thus the optimum $T$ for given $Y$ is obtained by projecting 
-$X'Y$ on the convex set of matrices $\mathcal{A}$. 
+$X'Y$ on the convex set of matrices $\mathcal{T}$. 
 
-For CFA this gives 
+For exploratory CFA this gives 
 $$
-T=\begin{bmatrix}F&D\end{bmatrix}=\begin{bmatrix}X'T&\text{diag}(X'U)\end{bmatrix}.
+T=\begin{bmatrix}A&D\end{bmatrix}=\begin{bmatrix}X'F&\text{diag}(X'U)\end{bmatrix}.
 $$ 
 For confirmatory MDFA in which we require some loadings to be 
-equal to each other and/or others to be equal to given constants finding $A$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
+equal to each other and/or others to be equal to given constants finding $T$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
 
 ### Optimum Scores for given Loadings
 
@@ -379,9 +392,8 @@ $(n-r)\times(m-r)$ matrix with $S'S=I$. Thus the optimum $Y$ is
 as given by \eqref{eq-yopt}.
 :::
 
-If $r=n$ or $r=m$ then there is no $S$ and the solution is unique. It is important to note that if $Y=KL'$ then 
-$Y'Y=LL'$, which is of rank $m<p$ and thus not equal to
-the identity.
+It is important to note that if $Y=KL'$ then $Y'Y=LL'$, which is of rank $m<p$ and thus not equal to
+the identity. Also note that formula \eqref{eq-yopt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. 
 
 ### Algorithm
 
@@ -395,6 +407,9 @@ Y^{(k)}&=\Pi_Y(XT^{(k)}),\label{eq-als1}\\
 T^{(k+1)}&=\Pi_T(X'Y^{(k)}).\label{eq-als2}
 \end{align}
 \end{subequations}
+It  does not matter how we choose $S$ in \eqref{eq-yopt}, because for all
+choices of $S$ we have $\text{tr}\ Y'XA=\|XA\|_\star$, and thus the same loss 
+function value.
 
 In most factor analytic applications we have $n>>m$. The computations 
 in \eqref{eq-als1} and \eqref{eq-als2} use the matrices $X$ and $Y$, which each
@@ -423,96 +438,41 @@ $T'CT$. Thus
 $$
 T^{(k+1)}=X'Y=CT^{(k)}(\{T^{(k)}\}'CT^{(k)})^{-\tfrac12}+X'K_\perp^{\ } SL_\perp'
 $$
-We have $K_\perp'XT=0$. If $T$ has rank $m$ then
-$X'K_\perp=0$.
+We have $K_\perp'XT=0$. If $T$ has rank $m$ then this implies
+$X'K_\perp=0$
+which leads to the result in the theorem.
 :::
 
 \sectionbreak
 
 
-## Derivatives
+## Gradient and Newton Methods
 
-Define $C:=X'X$ and for any real symmetric matrix 
-write $\lambda_s()$ for its eigenvalues, in decreasing order. 
-The following proposition was proved in @deleeuw_C_04a, page 128,
-but not really used for anything.
 
-::: {#thm-projection}
 $$
-\sigma_\star(A)=\text{tr}\ X'X+\text{tr}\ A'A-2\|XA\|_\star
+\sigma_\star(T)=\text{tr}\ X'X+\text{tr}\ T'T-2\|XT\|_\star=\text{tr}\ X'X+\text{tr}\ T'T-2\sum_{\nu=1}^m\lambda_\nu^\frac12(T'CT)
 $$
-:::
 
-::: {.proof}
-Clearly
+First and second derivatives of the trace norm with respect to $T$ were computed
+in @deleeuw_E_25d. The definition of $\mathcal{T}$ that was used is
+$$
+T=T_0+\sum_{s=1}^q\theta_s T_s,
+$$
+which allows for patterns with some elements fixed and some elements equal to other elements.
+$$
+\mathcal{D}_s\sigma_\star=\text{tr}\ T'T_s-\text{tr}\ (T'CT)^{-\tfrac12}T'CT_s
+$$
+
+The derivatives of the loss function ,,, with respect to the parameters $\theta_s$ are most easily expressed by first computing the derivatives of the eigenvalues of $T'CT$.
 \begin{equation}
-\sigma_\star(A)=\text{tr}\ X'X+\text{tr}\ A'A-2\max_{Y'Y=I}\text{tr}\ Y'XA,\label{eq-dc}
+\mathcal{D}_s\lambda_\nu=x_\nu'Q_sx_\nu,\label{eq-mdfadl}
 \end{equation}
-Now apply @thm-procrustus.
-:::
-
-@horn_johnson_91, theorem 3.3.14, p. 177
-
-$$
-\|XA\|_\star\leq\sum_{i=1}^m\lambda_i(X)\lambda_i(A)
-$$
-$$
-\sigma_\star(XA)\geq\sum_{i=1}^m(\lambda_i(X)-\lambda_i(A))^2
-$$
+where $Q_s:=T_s'CT+T'CT_s$. It follows that
+\begin{equation}
+\mathcal{D}_{st}\lambda_\nu=-2x_\nu'Q_s(A-\lambda_\nu I)^+Q_tx_\nu+2x_\nu'T_s'CT_tx_\nu.\label{eq-mdfaddl}
+\end{equation}
 
 
-$$
-f(A)=\|XA\|_\star=\max_{Y'Y=I}\text{tr}\ A'X'Y
-$$
-$$
-\|XA\|_\star\geq\|X\tilde A\|_\star+\text{tr}\ (A-\tilde A)'X'\tilde K\tilde L'=\text{tr}\ A'X'\tilde K\tilde L'
-$$
-$$\sigma(A)=\text{tr}\ C+\text{tr} A'A-2\|XA\|_\star\leq\text{tr}\ C+\text{tr} A'A-2\text{tr}\ A'X'\tilde K\tilde L'
-$$
-Define $\overline A:=X'\tilde K\tilde L'$ then
-$$
-\sigma(A)\leq\text{tr}\ C+\text{SSQ}(A-\overline A)-SSQ(\overline A)
-$$
-Now $$\tilde K\tilde L'=X\tilde A(\tilde A'X'X\tilde A)^{-\frac12}$$
-and thus 
-$$
-\overline A=CX\tilde A(\tilde A'C\tilde A)^{-\frac12}
-$$
-
-
-### Gradient
-
-$V=A'CA$ with eigenvalues $\lambda_s$ and eigenvectors
-$x_s$, where $s=1,\cdots m$. V(A) is of order $p$ and
-of rank $m$. $A$ is $m\times p$ with elements $a_{ij}$.
-Thus $\mathcal{D}_{(ij)}$ is the partial derivative with
-respect to element $a_{ij}$.
-
-\begin{align}
-\mathcal{D}_{(ij)}\lambda_s(A)&=x_s'(A)[\mathcal{D}_{(ij)}A'CA]x_s(A),\\
-\mathcal{D}_{(ij)}x_s(A)&=-(A'CA-\lambda_s(A)I)^+[\mathcal{D}_{(ij)}A'CA]x_s(A)
-\end{align}
-In ... we use the Moore-Penrose inverse of $V(A)-\lambda_s(A)I$. 
-
-Now for $V(A)=A'CA$ we have
-$$
-\mathcal{D}_{(ij)}A'CA=e_je_i'CA+A'Ce_ie_j'
-$$
-
-$$
-\mathcal{D}_{(ij)}\lambda_s(A)=2x_s'(A)e_j\ e_i'CAx_s(A)
-$$
-
-Now consider $\sqrt{\lambda(V(A))}$. 
-$$
-\mathcal{D}_{(ij)}\sqrt{\lambda_s(V(A))}=\frac{1}{\sqrt{\lambda_s(V(A))}}
-x_s'e_je_i'CAx_s
-$$
-Sum this over $s$ and put all the partials in a matrix.
-$$
-\mathcal{D}f(A)=CA(A'CA)^{-\frac12}
-$$
-where $(A'CA)^{-\frac12}$ is the symmetric square root of the Moore-Penrose inverse of $A'CA$ (and *not* the inverse of the symmetric square root of $A'CA$, which is singular for $p>m$)
 
 With this formula for the gradient many general purpose optimization methods for minimizing projected loss function ... become available. The R function
 ... (code in the appendix) uses the BFGS method of the optim() function from the stats package
@@ -543,34 +503,13 @@ h <- optProj(emmett, a, t)
 print(h)
 ```
 
-### Hessian
-
-Now for the Hessian.
-\begin{multline}
-\mathcal{D}_{(ij)(kl)}\sqrt{\lambda_s(A'CA)}=-\frac14\frac{1}{\lambda_s^\frac32(A)}
-x_s'[e_je_i'CA+A'Ce_ie_j']x_s\ x_s'[e_le_k'CA+A'Ce_ke_l']x_s+\\
-\frac12\frac{1}{\sqrt{\lambda_s(A'CA)}}\{x_s'[c_{ik}(e_je_l'+e_le_j')]x_s-2x_s'[e_je_i'CA+A'Ce_ie_j'](A-\lambda_sI)^+[e_le_k'CA+A'Ce_ke_l']x_s\}
-\end{multline}
-
-$$
-\mathcal{D}_{(ij)(kl)}A'CA=c_{ik}(e_je_l'+e_le_j')
-$$
-
-$CAx_s=y$
-$$
-4x_{js}e_i'CAx_s\ x_{ls}e_k'CAx_s
-$$
-$$
-x_s'[c_{ik}(e_je_l'+e_le_j')]x_s=2c_{ik}x_{js}x_{ls}.
-$$
-$$
-x_s'[e_je_i'CA+A'Ce_ie_j'](A-\lambda_sI)^+[e_le_k'CA+A'Ce_ke_l']x_s=
-$$
-
 
 \sectionbreak
 
 # Statistics
+
+The consistency and asymptotic normality of the MDFA estimates
+hasrecently beeen studied by @terada_25.
 
 Now define $C:=X'X$ and for any square symmetric T use the notation
 $\lambda_s(T)$ for the ordered eigenvalues of $T$. Define

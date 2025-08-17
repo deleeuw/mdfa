@@ -75,6 +75,8 @@ majProj <- function(c,
                     verbose = TRUE) {
   itel <- 1
   m <- nrow(c)
+  p <- ncol(aold)
+  q <- p - m
   ssqc <- sum(diag(c))
   ssqa <- sum(aold^2)
   aca <- crossprod(aold, c %*% aold)
@@ -107,21 +109,37 @@ majProj <- function(c,
     aold <- anew
     fold <- fnew
   }
+  loadings <- anew[, 1:q]
+  uniquenesses <- diag(anew[, -(1:q)]) ^ 2
+  mat <- crossprod(loadings, diag(1 / uniquenesses) %*% loadings)
+  mvc <- eigen(mat)$vectors
+  loadings <- loadings %*% mvc
+  return(list(
+    loadings = loadings,
+    uniquenesses = uniquenesses,
+    loss = fnew,
+    itel = itel
+  ))
 }
 
-alsRawX <- function(x, aold, template, itmax = 1000, eps = 1e-10, verbose = TRUE) {
+alsRawX <- function(x,
+                    aold,
+                    template,
+                    itmax = 1000,
+                    eps = 1e-10,
+                    verbose = TRUE) {
   m <- ncol(x)
   svxa <- svd(x %*% aold)
   yold <- tcrossprod(svxa$u[, 1:m], svxa$v[, 1:m])
   resi <- x - tcrossprod(yold, aold)
-  fold <- sum(resi ^ 2)
+  fold <- sum(resi^2)
   itel <- 1
   repeat {
     anew <- template * crossprod(x, yold)
     svxa <- svd(x %*% anew)
     ynew <- tcrossprod(svxa$u[, 1:m], svxa$v[, 1:m])
     resi <- x - tcrossprod(ynew, anew)
-    fnew <- sum(resi ^ 2)
+    fnew <- sum(resi^2)
     if (verbose) {
       cat(
         "itel",
@@ -163,7 +181,7 @@ ywFit <- function(x,
     }
     resi <- x - tcrossprod(t, f)
     ssum <- colSums(resi^2)
-    mloss <- 2 * n * sum(log(dold)) + sum(ssum / (dold ^ 2))
+    mloss <- 2 * n * sum(log(dold)) + sum(ssum / (dold^2))
     dnew <- sqrt(ssum / n)
     nloss <- 2 * n * sum(log(dnew)) + n * m
     print(c(itel, oloss, mloss, nloss))
@@ -174,14 +192,18 @@ ywFit <- function(x,
     oloss <- nloss
     dold <- dnew
   }
-  return(list(t = t, f = f, d = dnew, r = resi))
+  return(list(
+    t = t,
+    f = f,
+    d = dnew,
+    r = resi
+  ))
 }
 
-matrixPower <- function(x, p = 1/2) {
+matrixPower <- function(x, p = 1 / 2) {
   e <- eigen(x)
   evec <- e$vectors
   eval <- e$values
-  epow <- eval ^ p
+  epow <- eval^p
   return(evec %*% diag(epow) %*% t(evec))
 }
-
