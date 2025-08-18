@@ -305,58 +305,55 @@ There have been additional important contributions to MDFA in @adachi_12, @adach
 
 ## Alternating Least Squares
 
-The Alternating Least Squares (ALS) algorithm proposed for MDFA
-by both Kiers (in @socan_03) and @deleeuw_C_04a alternates finding 
-the optimum $Y$ for given $T$ and the optimum $T$ for given $Y$.
+The Alternating Least Squares (ALS) algorithm proposed for MDFA by both Kiers (in @socan_03) and @deleeuw_C_04a alternates finding the optimum $Y$ for given $T$ and the optimum $T$ for given $Y$.
 
 ### Optimum Loadings for Given Scores
 
 Finding the optimum $T$ for given $Y$ is  straightforward.
 We complete the square, as in
-\begin{multline}
-\sigma(Y,T)=\text{tr}\ C+\text{tr}\ T'T-2\text{tr}\ Y'XT=\\
+\begin{equation}
+\sigma(Y,T)=
 \text{tr}\ C+\text{tr} (T-X'Y)'(T-X'Y)-\text{tr}\ Y'CY.
-\end{multline}
+\end{equation}
 Thus the optimum $T$ for given $Y$ is obtained by projecting 
-$X'Y$ on the convex set of matrices $\mathcal{T}$. 
+$X'Y$ on the set of matrices $\mathcal{T}$. 
 
 For exploratory CFA this gives 
 $$
 T=\begin{bmatrix}A&D\end{bmatrix}=\begin{bmatrix}X'F&\text{diag}(X'U)\end{bmatrix}.
 $$ 
-For confirmatory MDFA in which we require some loadings to be 
-equal to each other and/or others to be equal to given constants finding $T$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
+For confirmatory MDFA in which we require some loadings to be equal to each other and/or others to be equal to given constants finding $T$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
 
 ### Optimum Scores for given Loadings
 
-$$
-\sigma(T,Y)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr} Y'XT
-$$
-
+Also
+\begin{equation}
+\sigma(T,Y)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ Y'XT.
+\end{equation}
 We have to maximize $\text{tr}\ Y'XT$ over all
 $n\times p$ orthonormal $Y$.
 The following theorem
-was given earlier, with somewhat different terminology, in the Appendix of @deleeuw_C_04a. Remember that the *nuclear norm* or 
-*trace norm* $\|Z\|_\star$ of a matrix $Z$ is the sum of its singular values. The nuclear norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and equal to the trace of $(Z'Z)^\tfrac123$.
+was given earlier, using somewhat different terminology, in the Appendix of @deleeuw_C_04a. Remember that the *nuclear norm* (a.k.a. the 
+*trace norm*) $\|Z\|_\star$ of a matrix $Z$ is the sum of its singular values. The nuclear norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
 
 ::: {#thm-procrustus}
 $$
-\max_{Y'Y=I}\text{tr}\ Y'XA=\|XA\|_\star
+\max_{Y'Y=I}\text{tr}\ Y'XT=\|XT\|_\star
 $$
 :::
 
 :::{.proof}
 The stationary equations are $XT=YM$ with $Y'Y=I$ and $M$ a symmetric matrix of Lagrange multipliers of order $p$. It follows that $M^2=T'Y'YT$ and thus $M$ is the (unique) positive semi-definite
-symmetric square root $\smash{(T'Y'YT)^\tfrac12}$
+symmetric square root $\smash{(T'Y'YT)^{1/2}}$
 (or its negative, for a minimum). At the maximum $\text{tr}\ Y'XT=\text{tr}\ M=\|XT\|_\star$.
 :::
 
-Note that @thm-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $XA$ of rank $m$.
+Note that @thm-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $XT$ of rank $m$.
 
 ::: {#thm-construct}
-The $n\times m$ orthonormal $Y$ maximizes $\text{tr}\ Y'XA$, with 
+The $n\times m$ orthonormal $Y$ maximizes $\text{tr}\ Y'XT$, with 
 \begin{equation}
-XA=\begin{bmatrix}K&K_\perp\end{bmatrix}
+XT=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
 \begin{bmatrix}L'&L_\perp'\end{bmatrix},\label{eq-xa}
 \end{equation}
@@ -369,15 +366,15 @@ for some $(n-r)\times(m-r)$ matrix $S$ with $S'S=I$.
 
 ::: {.proof}
 Partition the columnwise orthonormal $n\times m$ matrix 
-$Y$ in the same way as $XA$.
+$Y$ in the same way as $XT$.
 \begin{equation}
 Y=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}P&Q\\R&S\end{bmatrix}
 \begin{bmatrix}L'&L_\perp'\end{bmatrix},\label{eq-odecomp}
 \end{equation}
-where the four-block partitioned matrix in the middle of \eqref{eq-odecomp} must be orthonormal again. Now $\text{tr}\ Y'XA=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner sense (because we must have
+where the four-block partitioned matrix in the middle of \eqref{eq-odecomp} must be orthonormal again. Now $\text{tr}\ Y'XA=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner\footnote{$A\lesssim B$ means $A-B$ positive semi-definite.} sense (because we must have
 $P'P+R'R=I$). It follows that the diagonal elements of $P$ must be less than or equal to one, and thus the maximum of
-$\text{tr}\ Y'XA$ is $\text{tr}\ \Lambda$, uniquely attained for $P=I$.
+$\text{tr}\ Y'XT$ is $\text{tr}\ \Lambda$, uniquely attained for $P=I$.
 But $P=I$ implies that at the maximum $R=0$ and $Q=0$, and $S$ is any
 $(n-r)\times(m-r)$ matrix with $S'S=I$. Thus the optimum $Y$ is
 as given by \eqref{eq-yopt}.
@@ -385,6 +382,16 @@ as given by \eqref{eq-yopt}.
 
 It is important to note that if $Y=KL'$ then $Y'Y=LL'$, which is of rank $m<p$ and thus not equal to
 the identity. Also note that formula \eqref{eq-yopt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. 
+
+### CFA Variation
+
+$$
+\sigma(F,A,U,D)=SSQ(X-FA'-UD)
+$$
+$A=X'F$ and $D=\diag(X'U)$
+
+Maximize $F'(X-UD)$, maximize $U'(X-FA')$
+
 
 ### Algorithm
 
@@ -416,15 +423,15 @@ advantages for secondary analysis.
 ::: {#thm-als}
 Suppose $T^{(k)}$ has rank $m$. Then
 \begin{equation}
-T^{(k+1)}=\Pi_T\{CT^{(k)}(T^{(k)}CT^{(k)})^{-\tfrac12}\}.\label{eq-alsshort}
+T^{(k+1)}=\Pi_T\{CT^{(k)}(T^{(k)}CT^{(k)})^{-1/2}\}.\label{eq-alsshort}
 \end{equation}
 :::
 ::: {.proof}
 We rewrite \eqref{eq-yopt} as
 $$
-Y=XT(T'CT)^{-\tfrac12}+K_\perp^{\ } SL_\perp'
+Y=XT(T'CT)^{-1/2}+K_\perp^{\ } SL_\perp'
 $$
-where $(T'CT)^{-\tfrac12}$ is the square root of the Moore-Penrose inverse of 
+where $(T'CT)^{-1/2}$ is the square root of the Moore-Penrose inverse of 
 $T'CT$. Thus
 $$
 T^{(k+1)}=X'Y=CT^{(k)}(\{T^{(k)}\}'CT^{(k)})^{-\frac12}+X'K_\perp^{\ } SL_\perp'
@@ -459,7 +466,7 @@ T=T_0+\sum_{s=1}^q\theta_s T_s,
 $$
 which allows for patterns with some elements fixed and some elements equal to other elements.
 $$
-\mathcal{D}_s\sigma_\star=\text{tr}\ T'T_s-\text{tr}\ (T'CT)^{-\tfrac12}T'CT_s
+\mathcal{D}_s\sigma_\star=\text{tr}\ T'T_s-\text{tr}\ (T'CT)^{-1/2}T'CT_s
 $$
 
 The derivatives of the loss function ,,, with respect to the parameters $\theta_s$ are most easily expressed by first computing the derivatives of the eigenvalues of $T'CT$.
@@ -511,6 +518,15 @@ print(h)
 
 ## Additional Constraints
 
+From the CFA definition ...-... we see that $A=X'F$ and 
+$D=X'U$. In an exploratory MDFA solution we do have
+$A=X'F$ but $D=\text{diag}(X'U)$. As a consequence
+unique factor $i$ in the solution can be correlated
+with variables $j$, where $j\neq i$. This is contrary
+the very idea of unique factors. If $X'U$ is not
+diagonal then this indicates a lack of CFA fit. It may also be sufficiently counter-intuitive to prevent it from
+happening.
+
 In the thesis of Socan a variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the version of MDFA in @stegeman_16, which they call the *Data Factor Model*,
 it is even required that $U'X=D$. In the case of perfect fit the constraint $U'X=D$ is automatically
 satisfied, but it will not be so for the least squares fit. These additional constraints
@@ -521,17 +537,68 @@ computing factor scores. We do not impose those constraints in this paper.
 
 ## Heywood Cases
 
-$AA'=X'FF'X\lesssim C$
+The CFA equations $C=AA'+D^2$ imply that $0\lesssim D^2\lesssim C$ and $0\lesssim AA'\lesssim C$. This in turn implies that $D^2\lesssim\text{diag}(C)$.
+In many forms of CFA it is possible that the estimated
+uniqueness \\
 
-$0\leq d_j^2\leq c_{jj}$
+::: {#thm-bounds}
+In the MDFA solution $AA'\lesssim C$ and 
+$0\lesssim D^2\lesssim\text{diag}(C)$.
+:::
+::: {.proof}
+:::
 
-We have not shown that $D^2\lesssim C$
+Note that we have not shown that $D^2\lesssim C$
 
 ## Scale Free
 
+An MDFA procedure $X\rightarrow(Y,T)$ maps data matrices
+$X$ to a pair of scores $Y$ and loadings $T$. The
+procedure is scale-free if for all diagonal $\Phi$
+we have $X\Phi\rightarrow(Y,T\Phi)$. The MDFA 
+procedure we have discussed so far is not scale-free, but 
+it can be made scale-free in various ways.
+
+The first way is traditional. We normalize the data
+in $X$ to unit length, so that $C=X'X$ becomes a
+correlation matrix. This can be formalized as 
+minimizing
 $$
-\text{tr}\ (X-FA'-UD)W(X-FA'-UD)'=\text{tr}\ XWX'+\text{tr}\ A'WA+\text{tr}\ DWD-2\ \text{tr}\ A'WX'F
--2\ \text{tr}\ DWX'U
+\sigma_W(T,Y):=\text{tr}\ (X-YT')W(X'-TY')
+$$
+with $W:=\text{diag}^{-1}(C)$. @adachi_12
+proposes instead to use $\smash{W=C^{-1}}$.
+But no matter how we choose the positive definite
+$W$ the computational consequences are
+easy to handle.
+
+We have
+$$
+\sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ (T-X'Y)'W(T-X'Y)-\text{tr}\ Y'XWX'Y
+$$
+and consequently the optimal $T$ for given $Y$ is the
+projection in the metric $W$ of $X'Y$ on $\mathcal{T}$.
+This may or may not be more complicated than unweighted
+projection, depending on the definition of $\mathcal{T}$.
+
+Also
+$$
+\sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ T'WT-2\ \text{tr}\ Y'XWT,
+$$
+which means the optimal $Y$ for given $T$ is the 
+(unweighted) projection of $XWT$ on the orthonormal $n\times p$ matrices.
+
+As in the unweighted case we can combine the two ALS
+steps into a one-step upgrade for $T$.
+$$
+T^{(k+1)}=\Pi_T(CWT^{(k)}(\{T^{(k)}\}'WCWT^{(k)})^{-1/2})
+$$
+
+
+
+
+$$
+\text{tr}\ (X-YT')W(X-YT')'=\text{tr}\ XWX'+\text{tr}\ T'WT-2\ \text{tr}\ Y'XWT
 $$
 $$
 (F U)= procrustus(XW(A+D))
