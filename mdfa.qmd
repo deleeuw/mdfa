@@ -115,7 +115,7 @@ For CFA the system \eqref{eq-fa1}-\eqref{eq-fa3} thus becomes
 \begin{align}
 X&=FA'+UD,\label{eq-cfa1}\\
 F'F&=I,\label{eq-cfa2}\\
-U'U&=UU'=I,\label{eq-cfa3}\\
+U'U&=I,\label{eq-cfa3}\\
 F'U&=0,\label{eq-cfa4}\\
 D&=\text{diag(D)},\label{eq-cfa5}\\
 A&\in\mathcal{A}.\label{eq-cfa6}
@@ -237,14 +237,13 @@ From \eqref{eq-writey} and \eqref{eq-solves} we see that
 Y=K_1M_1'+K_0VM_0'\label{eq-yperf}
 \end{equation}
 provides us with the required solution of the full system.
+:::
 
 If the non-zero singular values of $X$, and consequently of $T$,  are all different then $K_1$ and 
 $M_1$ are uniquely determined. Matrices $K_0$ and 
 $M_0$ consist of orthonormal bases for the null-spaces of $X$ and $T$,
 which are only determined up to rotations. We can select any one of these bases
 and absorb the rotations in the arbitrary matrix $V$.
-:::
-
 The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT'$ there is a linear subspace of solutions $Y$ of $X=YT'$. Even if $T$ is identified, $Y$ is not. This is the *factor indeterminacy problem*, which has haunted the field for more than 100 years.
 (@steiger_schoenemann_78).
 
@@ -254,7 +253,7 @@ The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT
 
 ## MINRES
 
-There are several factor analytic decomposition techniques that use least squares loss functions. The oldest and most obvious one is
+There are several factor analytic decomposition techniques that use least squares loss functions\footnote{We use SSQ() forthe unweighted sum of squares of a matrix or vector.}. The oldest and most obvious one is
 \begin{equation}
 \sigma(T)=\text{SSQ}(C-TT'),\label{eq-minres}
 \end{equation}
@@ -263,30 +262,30 @@ For CFA \eqref{eq-minres} becomes
 \begin{equation}
 \sigma(T)=\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
 \end{equation}
-An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course this only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa}
+An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function \eqref{eq-minrescfa} over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course this only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa}
 are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_69 and @joreskog_vanthillo_71.
 
 Also for CFA @young_40 and @whittle_52 propose minimizing the weighted least 
 squares loss function
 \begin{equation}
-\sigma(T,F)=\text{tr}\ (X-FA')D^{-2}(X-FA')',\label{eq-young-whittle}
+\sigma(A, D, F)=\text{tr}\ (X-FA')D^{-2}(X-FA')',\label{eq-young-whittle}
 \end{equation}
 which has the disadvantage that it assumes $D$ is known, or at least that there is a reasonable prior estimate of $D$. Minimizing \eqref{eq-young-whittle} has the advantage that the problem becomes a form of principal component analysis (PCA), in which the solution can be computed with a single SVD.
 
-It is tempting to use block relaxation here, alternating finding the optimum
+It is tempting to use block relaxation heto minimize \eqref{eq-young-whittle}, alternating finding the optimum
 $F$ and $A$ for fixed $D$, and then repeating this iteratively with the new $D$ equal to
 \begin{equation}
 D^2=n^{-1}\text{diag}\ (X-FA')'(X-FA').\label{eq-yw}
 \end{equation}
-This technique actually corresponds to alternating minimization of the loss function
+This in fact corresponds to alternating minimization of the loss function
 \begin{equation}
 \sigma(A,F,D)=n\log\text{det}(D^2)+\text{tr}\ (X-FA')D^{-2}(X-FA')'.\label{eq-lawley41}
 \end{equation}
-But \eqref{eq-lawley41} is the negative maximum likelihood loss function for the fixed factor model from @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
+But \eqref{eq-lawley41} is the negative likelihood loss function for the fixed factor model from @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a perfect but trivial solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
 
 ## MDFA
 
-A more direct way of fitting the full CFA model was discussed (independently and around the same time) in the dissertation of @socan_03 and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as Matrix Decomposition Factor analysis (MDFA). Socan attributes MDFA (which they call *Direct Factor Analysis*) to a 2001 personal communication and some unpublished notes of his advisor Henk Kiers.
+A more direct way of fitting the full CFA model was discussed (independently and around the same time) in the dissertation of @socan_03 and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as Matrix Decomposition Factor analysis (MDFA). Socan attributes MDFA (which they call "Direct Factor Analysis") to a 2001 personal communication and some unpublished notes of his advisor Henk Kiers.
 
 In MDFA the least squares loss function is
 \begin{equation}
@@ -294,19 +293,11 @@ In MDFA the least squares loss function is
 \end{equation}
 which must be minimized over $Y'Y=I$ and $T\in\mathcal{T}$.
 MDFA was not immediately accepted as an alternative factor analysis technique. It made its first journal appearance in a series of papers by Unkel and Trendafilov, based largely on Unkel's dissertation (@unkel_09). Over the years they contributed a "robust"
-version of MDFA and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11)
-There is a nice review of these contributions in @unkel_trendafilov_10, with an update in
-@trendafilov_unkel_krzanowski_13.
+version of MDFA (@unkel_trendafilov_10) and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11). There is a nice review of these contributions in @unkel_trendafilov_10, with an update in @trendafilov_unkel_krzanowski_13.
 
-In the thesis of Socan a variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the version of MDFA in @stegeman_16, which they call the *Data Factor Model*,
-it is even required that $U'X=D$. In the case of perfect fit the constraint $U'X=D$ is automatically
-satisfied, but it will not be so for the least squares fit. These additional constraints
-on MDFA complicate the ALS algorithm and take us in the direction of alternative methods for 
-computing factor scores. We do not impose those constraints in this paper.
+There have been additional important contributions to MDFA in @adachi_12, @adachi_trendafilov_18,
+@stegeman_16, @terada_25, @yamashita_25. We will discuss these recent contributions in various places in this paper. When googling MDFA, keep in mind that Adachi initially used "Data-Fitting Factor Analysis", while Stegeman used the "Data Factor Model". 
 
-K. Adachi contributed some useful results to what they initially called *Data-Fitting Factor Analysis*. @adachi_12, @adachi_trendafilov_18
-
-@yamashita_25, @terada_25
 
 \sectionbreak
 
@@ -408,8 +399,8 @@ T^{(k+1)}&=\Pi_T(X'Y^{(k)}).\label{eq-als2}
 \end{align}
 \end{subequations}
 It  does not matter how we choose $S$ in \eqref{eq-yopt}, because for all
-choices of $S$ we have $\text{tr}\ Y'XA=\|XA\|_\star$, and thus the same loss 
-function value.
+choices of $S$ we have $\text{tr}\ Y'XA=\|XA\|_\star$, and thus all choices of $S$ give
+the same loss  function value.
 
 In most factor analytic applications we have $n>>m$. The computations 
 in \eqref{eq-als1} and \eqref{eq-als2} use the matrices $X$ and $Y$, which each
@@ -425,7 +416,7 @@ advantages for secondary analysis.
 ::: {#thm-als}
 Suppose $T^{(k)}$ has rank $m$. Then
 \begin{equation}
-T^{(k+1)}=\Pi_T\{CT^{(k)}(T^{(k)}CT^{(k)})^{-\tfrac12}\}
+T^{(k+1)}=\Pi_T\{CT^{(k)}(T^{(k)}CT^{(k)})^{-\tfrac12}\}.\label{eq-alsshort}
 \end{equation}
 :::
 ::: {.proof}
@@ -436,18 +427,26 @@ $$
 where $(T'CT)^{-\tfrac12}$ is the square root of the Moore-Penrose inverse of 
 $T'CT$. Thus
 $$
-T^{(k+1)}=X'Y=CT^{(k)}(\{T^{(k)}\}'CT^{(k)})^{-\tfrac12}+X'K_\perp^{\ } SL_\perp'
+T^{(k+1)}=X'Y=CT^{(k)}(\{T^{(k)}\}'CT^{(k)})^{-\frac12}+X'K_\perp^{\ } SL_\perp'
 $$
 We have $K_\perp'XT=0$. If $T$ has rank $m$ then this implies
 $X'K_\perp=0$
 which leads to the result in the theorem.
 :::
 
+Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which 
+means finding the $m$ largest eigenvalues and their corresponding eigenvectors. The update is then
+projected on the set $\mathcal{T}$ defined by the template. The ALS interpretation of the
+algorithm shows directly that a decreasing sequence of loss function values is produced, which
+proves convergence of $T$ under the usual identification and rank conditions.
+
 \sectionbreak
 
 
 ## Gradient and Newton Methods
 
+
+### Gradient
 
 $$
 \sigma_\star(T)=\text{tr}\ X'X+\text{tr}\ T'T-2\|XT\|_\star=\text{tr}\ X'X+\text{tr}\ T'T-2\sum_{\nu=1}^m\lambda_\nu^\frac12(T'CT)
@@ -503,13 +502,49 @@ h <- optProj(emmett, a, t)
 print(h)
 ```
 
+### Hessian
+
 
 \sectionbreak
 
-# Statistics
+# Discussion
+
+## Additional Constraints
+
+In the thesis of Socan a variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the version of MDFA in @stegeman_16, which they call the *Data Factor Model*,
+it is even required that $U'X=D$. In the case of perfect fit the constraint $U'X=D$ is automatically
+satisfied, but it will not be so for the least squares fit. These additional constraints
+on MDFA complicate the ALS algorithm and take us in the direction of alternative methods for 
+computing factor scores. We do not impose those constraints in this paper.
+
+## Correlated Errors
+
+## Heywood Cases
+
+$AA'=X'FF'X\lesssim C$
+
+$0\leq d_j^2\leq c_{jj}$
+
+We have not shown that $D^2\lesssim C$
+
+## Scale Free
+
+$$
+\text{tr}\ (X-FA'-UD)W(X-FA'-UD)'=\text{tr}\ XWX'+\text{tr}\ A'WA+\text{tr}\ DWD-2\ \text{tr}\ A'WX'F
+-2\ \text{tr}\ DWX'U
+$$
+$$
+(F U)= procrustus(XW(A+D))
+$$
+
+## Statistical Considerations
+
+$$
+\underline{x}_{ij}=\mathcal{N}(\mu_j+\sum f_{is}a_{js}+u_{ij}d_j, s^2)
+$$
 
 The consistency and asymptotic normality of the MDFA estimates
-hasrecently beeen studied by @terada_25.
+has recently been studied by @terada_25.
 
 Now define $C:=X'X$ and for any square symmetric T use the notation
 $\lambda_s(T)$ for the ordered eigenvalues of $T$. Define
