@@ -1,3 +1,19 @@
+matrixPrint <- function(x,
+                        digits = 6,
+                        width = 8,
+                        format = "f",
+                        flag = "+") {
+  print(noquote(
+    formatC(
+      x,
+      digits = digits,
+      width = width,
+      format = format,
+      flag = flag
+    )
+  ))
+}
+
 emmett <- matrix(0, 9, 9)
 emmett[1, 2:9] <- c(0.523, 0.395, 0.471, 0.346, 0.426, 0.576, 0.434, 0.639)
 emmett[2, 3:9] <- c(0.479, 0.506, 0.418, 0.462, 0.547, 0.283, 0.645)
@@ -10,12 +26,32 @@ emmett[8, 9:9] <- c(0.470)
 emmett <- emmett + t(emmett)
 diag(emmett) <- 1
 
+maxwell <- matrix(0, 10, 10)
+maxwell[1, 2:10] <- c(.345, .594, .404, .579, .280, .449, .188, .303, .200)
+maxwell[2, 3:10] <- c(.477, .338, .230, .159, .205, .120, .168, .145)
+maxwell[3, 4:10] <- c(.498, .505, .251, .377, .186, .273, .154)
+maxwell[4, 5:10] <- c(.389, .168, .249, .173, .195, .055)
+maxwell[5, 6:10] <- c(.151, .285, .129, .159, .079)
+maxwell[6, 7:10] <- c(.363, .359, .227, .260)
+maxwell[7, 8:10] <- c(.448, .439, .511)
+maxwell[8, 9:10] <- c(.429, .316)
+maxwell[9, 10:10] <- c(.301)
+maxwell <- maxwell + t(maxwell)
+diag(maxwell) <- 1
+  
 aeig <- eigen(emmett)
 avec <- aeig$vectors[, 1:3]
 aval <- diag(sqrt(aeig$values[1:3]))
 acom <- avec %*% aval
 aemm <- cbind(acom, diag(sqrt(1 - rowSums(acom^2))))
 temm <- cbind(matrix(1, 9, 3), diag(9))
+
+meig <- eigen(maxwell)
+mvec <- meig$vectors[, 1:4]
+mval <- diag(sqrt(meig$values[1:4]))
+mcom <- mvec %*% mval
+memm <- cbind(mcom, diag(sqrt(1 - rowSums(mcom^2))))
+uemm <- cbind(matrix(1, 10, 4), diag(10))
 
 optProj <- function(c, a, t) {
   nrow <- nrow(a)
@@ -67,7 +103,7 @@ grdProj <- function(a, cp, tp, nrow, ncol) {
   return(as.vector(tp * (a - cp %*% amt %*% mva)))
 }
 
-majProj <- function(c,
+mdfaAlgorithmB <- function(c,
                     aold,
                     template,
                     itmax = 100,
@@ -122,7 +158,7 @@ majProj <- function(c,
   ))
 }
 
-alsRawX <- function(x,
+mdfaAlgorithmA <- function(x,
                     aold,
                     template,
                     itmax = 1000,
@@ -158,46 +194,6 @@ alsRawX <- function(x,
     yold <- ynew
     fold <- fnew
   }
-}
-
-ywFit <- function(x,
-                  dold = rep(1, ncol(x)),
-                  p = 2,
-                  itmax = 10,
-                  eps = 1e-10,
-                  verbose = TRUE) {
-  itel <- 1
-  n <- nrow(x)
-  m <- ncol(x)
-  oloss <- Inf
-  repeat {
-    xd <- x %*% diag(1 / dold)
-    sv <- svd(xd, nu = p, nv = p)
-    t <- as.matrix(sv$u)
-    if (p == 1) {
-      f <- dold * as.matrix(sv$v) * sv$d
-    } else {
-      f <- dold * as.matrix(sv$v) %*% diag(sv$d[1:p])
-    }
-    resi <- x - tcrossprod(t, f)
-    ssum <- colSums(resi^2)
-    mloss <- 2 * n * sum(log(dold)) + sum(ssum / (dold^2))
-    dnew <- sqrt(ssum / n)
-    nloss <- 2 * n * sum(log(dnew)) + n * m
-    print(c(itel, oloss, mloss, nloss))
-    if ((itel == itmax) || ((oloss - nloss) < eps)) {
-      break
-    }
-    itel <- itel + 1
-    oloss <- nloss
-    dold <- dnew
-  }
-  return(list(
-    t = t,
-    f = f,
-    d = dnew,
-    r = resi
-  ))
 }
 
 matrixPower <- function(x, p = 1 / 2) {

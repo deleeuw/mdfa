@@ -1,0 +1,22 @@
+\contentsline {section}{\numberline {1}Introduction}{4}{section.1}%
+\contentsline {section}{\numberline {2}The Fundamental Theorem}{6}{section.2}%
+\contentsline {section}{\numberline {3}Least Squares Factor Analysis}{8}{section.3}%
+\contentsline {subsection}{\numberline {3.1}MINRES}{8}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}MDFA}{9}{subsection.3.2}%
+\contentsline {section}{\numberline {4}MDFA Algorithms}{10}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Algorithm A}{10}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Optimum Loadings for Given Scores}{10}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Optimum Scores for given Loadings}{10}{subsubsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.2}Algorithm C}{15}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Gradient and Newton Methods}{17}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}Gradient}{17}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Hessian}{20}{subsubsection.4.3.2}%
+\contentsline {section}{\numberline {5}Discussion}{21}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Additional Constraints}{21}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Correlated Errors}{21}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Heywood Cases}{21}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Scale Free}{21}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}Statistical Considerations}{22}{subsection.5.5}%
+\contentsline {section}{\numberline {6}Code}{24}{section.6}%
+\contentsline {section}{References}{24}{section*.2}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

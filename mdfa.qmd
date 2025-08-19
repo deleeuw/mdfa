@@ -45,21 +45,6 @@ abstract: TBD
 suppressPackageStartupMessages(library(knitr, quietly = TRUE))
 suppressPackageStartupMessages(library(tinytex, quietly = TRUE))
 source("mdfaOptim.R")
-matrixPrint <- function(x,
-                        digits = 6,
-                        width = 8,
-                        format = "f",
-                        flag = "+") {
-  print(noquote(
-    formatC(
-      x,
-      digits = digits,
-      width = width,
-      format = format,
-      flag = flag
-    )
-  ))
-}
 ```
 
 \sectionbreak
@@ -303,7 +288,7 @@ There have been additional important contributions to MDFA in @adachi_12, @adach
 
 # MDFA Algorithms
 
-## Alternating Least Squares
+## Algorithm A
 
 The Alternating Least Squares (ALS) algorithm proposed for MDFA by both Kiers (in @socan_03) and @deleeuw_C_04a alternates finding the optimum $Y$ for given $T$ and the optimum $T$ for given $Y$.
 
@@ -382,18 +367,7 @@ as given by \eqref{eq-yopt}.
 
 It is important to note that if $Y=KL'$ then $Y'Y=LL'$, which is of rank $m<p$ and thus not equal to
 the identity. Also note that formula \eqref{eq-yopt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. 
-
-### CFA Variation
-
-$$
-\sigma(F,A,U,D)=SSQ(X-FA'-UD)
-$$
-$A=X'F$ and $D=\diag(X'U)$
-
-Maximize $F'(X-UD)$, maximize $U'(X-FA')$
-
-
-### Algorithm
+## Algorithm B
 
 Write $\Pi_Y()$ for the least squares projection of
 a matrix on the columnwise orthonormal matrices of the same
@@ -447,6 +421,114 @@ projected on the set $\mathcal{T}$ defined by the template. The ALS interpretati
 algorithm shows directly that a decreasing sequence of loss function values is produced, which
 proves convergence of $T$ under the usual identification and rank conditions.
 
+Our example is the correlation matrix of order nine from 
+@emmett_49, also used in @lawley_maxwell_71, pp. 42-44. We use three common factors, and compare our results with those obtained using multinormal maximum likelihood (@lawley_maxwell_71, table 4.2). We cannot apply algorithm A here, because we do not have 
+the data matrix $X$, only the correlation matrix $C$.
+
+```{r emmett, echo = FALSE}
+matrixPrint(emmett, digits = 3, width = 5, flag = "")
+```
+
+```{r alga, echo = FALSE, cache = TRUE}
+h <- mdfaAlgorithmB(emmett, aemm, temm, itmax = 1000, verbose = FALSE)
+```
+
+As the initial estimate for $A$ we use the first three
+principal components, scaled to the length of the corresponding eigenvalues. The initial estimate of $D$ is the square root of the diagonal of $I-AA'$. Algorithm B converges in `r h$itel`
+iterations to a loss of `r h$loss`, where convergence is defined
+as a loss-decrease in successive iterations of less than 
+`r 1e-10`. The MDFA uniquenesses are
+
+```{r alga_d, echo = FALSE}
+matrixPrint(h$uniquenesses, digits = 3, width = 5, flag ="")
+```
+The uniquenesses from the ML solution in Lawley and Maxwell's Table 4.2 are
+```{r ml_d, echo = FALSE}
+mld <- c(.450, .427, .617, .212, .381, .177, .400, .462, .231)
+matrixPrint(mld, digits = 3, width = 5, flag ="")
+```
+Comparing loadings is slightly more involved. The ML solution
+is rotated so that $A'D^{-2}A$ is diagonal, so we rotate the 
+MDFA solution in the same way. The MDFA loadings are
+
+```{r alga_a, echo = FALSE}
+matrixPrint(-h$loadings, digits = 3, width = 5)
+```
+
+The ML loadings are
+```{r ml_a, echo = FALSE}
+ml_a <- matrix(c(
+  .664, .689, .493, .837, .705, .819, .661, .458, .766,
+  .321, .247, .302, -.292, -.315, -.377, .396, .296, .427,
+  .074, -.193, -.222, -.035, -.153, .105, -.078, .491, -.012),
+  9, 3)
+matrixPrint(ml_a, digits = 3, width = 5)
+```
+
+```{r mdfa_plot, echo = FALSE, fig.align = "center", fig.width = 6, fig.height = 6}
+par(pty="s")
+mdfa <- tcrossprod(h$loadings) + diag(h$uniquenesses)
+plot(emmett, mdfa, col = "RED")
+abline(0, 1)
+```
+
+```{r ml_plot, echo = FALSE, fig.align = "center", fig.width = 6, fig.height = 6}
+par(pty="s")
+ml <- tcrossprod(ml_a) + diag(mld)
+plot(emmett, ml, col = "RED")
+abline(0, 1)
+```
+The Emmett example is somewhat atypical, because the CFA model with three factors has a near perfect fit. This explains why the
+MDFA and ML solutions are nearly identical.
+
+Lawley and Maxwell give a second example, using data given by
+@maxwell_61.
+
+## Algorithm C
+
+In @deleeuw_C_04a an alternative ALS algorithm for CFA
+is mentioned and briefly described. It minimizes
+$$
+\sigma(F,A,U,D)=SSQ(X-FA'-UD),
+$$
+but instead of alternating an update of $Y=(F\ U)$ for given $T=(A\ D)$ and of $T=(A\ D)$ for given $Y=(F\ U)$, it uses a
+slightly different strategy. The three steps in an ALS
+iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for
+given $(F,U,D)$, and $(A, D)$ for given $(F, U)$. The third step is the same as in Algorithm A, the first two steps
+are different.
+
+Consider minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is
+equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying $F'F=I$ and $F'U=0$. Now $F'U=0$ if and only if $F=U_\perp V$,
+where $U_\perp$ is an $n\times(n-m)$ orthonormal basis for the complement
+of $U$ and $V$ is any $(n-m)\times q$ matrix. Thus we must maximize $\text{tr}\ V'U_\perp'XA$ over $V$ satisfying $V'V=I$. The optimum $V$ is the projection of $U_\perp'XA$
+on the set of orthonormal $(n-m)\times q$ matrices. Thus
+$$
+F=U_\perp V=U_\perp^{\ } U_\perp'XA
+(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}.
+$$
+If we update $A$ next to $A^+$ then
+$$
+A^+=X'F=X'U_\perp^{\ } U_\perp'XA
+(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}
+$$
+Now use
+$U_\perp^{\ } U_\perp'=I-UU'$ and define $\tilde D=X'U$,
+so that $D=\text{diag}(\tilde D)$. Then ... becomes
+$$
+A^+=(C-\tilde D\tilde D')A[A'(C-\tilde D\tilde D')A]^{-1/2}
+$$
+
+In the same way the optimum $U$ for given $(F,A,D)$ is
+$$
+U=F_\perp^{\ } F_\perp'XD
+(DX'F_\perp^{\ } F_\perp'XD)^{-1/2}.
+$$
+which, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $X'F=A$, gives the update
+$$
+D^+=\text{diag}(X'U)=\text{diag}\left\{(C-AA')D
+[D(C-AA')D]^{-1/2}\right\}
+$$
+
 \sectionbreak
 
 
@@ -459,8 +541,12 @@ $$
 \sigma_\star(T)=\text{tr}\ X'X+\text{tr}\ T'T-2\|XT\|_\star=\text{tr}\ X'X+\text{tr}\ T'T-2\sum_{\nu=1}^m\lambda_\nu^\frac12(T'CT)
 $$
 
-First and second derivatives of the trace norm with respect to $T$ were computed
-in @deleeuw_E_25d. The definition of $\mathcal{T}$ that was used is
+First and second derivatives of the trace norm with respect to $T$ were computed in @deleeuw_E_25d. 
+$$
+\mathcal{D}\sigma_\star(T)=T-CT(T'CT)^{-1/2}
+$$
+
+The definition of $\mathcal{T}$ that was used is
 $$
 T=T_0+\sum_{s=1}^q\theta_s T_s,
 $$
@@ -482,10 +568,7 @@ where $Q_s:=T_s'CT+T'CT_s$. It follows that
 
 With this formula for the gradient many general purpose optimization methods for minimizing projected loss function ... become available. The R function
 ... (code in the appendix) uses the BFGS method of the optim() function from the stats package
-(@r_core_team_25). Our example is the correlation matrix of order 9 from 
-@emmett_49, also used in @lawley_maxwell_71, pp. 42-46. We use three
-common factors, and compare our results with those obtained using
-multinormal maximum likelihood (@lawley_maxwell_71, table 4.2).
+(@r_core_team_25). 
 
 ```{r}
 matrixPrint(emmett, digits = 3, width = 5, flag = "")
