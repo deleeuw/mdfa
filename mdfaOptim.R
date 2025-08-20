@@ -1,3 +1,5 @@
+library(e1071)
+
 matrixPrint <- function(x,
                         digits = 6,
                         width = 8,
@@ -53,14 +55,27 @@ mcom <- mvec %*% mval
 memm <- cbind(mcom, diag(sqrt(1 - rowSums(mcom^2))))
 uemm <- cbind(matrix(1, 10, 4), diag(10))
 
-optProj <- function(c, a, t) {
+data(bfi, package = "psych")
+bfi <- as.matrix(bfi)[, 1:25]
+bfi <- impute(bfi, "mean")
+bfi <- apply(bfi, 2, function(x) x - mean(x))
+bfi <- apply(bfi, 2, function(x) x / sqrt(sum(x ^ 2)))
+cfi <- cor(bfi)
+ceig <- eigen(cfi)
+cvec <- ceig$vectors[, 1:5]
+cval <- diag(sqrt(ceig$values[1:5]))
+ccom <- cvec %*% cval
+cemm <- cbind(ccom, diag(sqrt(1 - rowSums(ccom^2))))
+vemm <- cbind(matrix(1, 25, 5), diag(25))
+
+mdfaAlgorithmG <- function(c, a, t) {
   nrow <- nrow(a)
   ncol <- ncol(a)
   ncom <- ncol - nrow
   h <- optim(
     par = as.vector(a),
-    fn = funProj,
-    gr = grdProj,
+    fn = theFunc,
+    gr = theGrad,
     method = "BFGS",
     control = list(trace = 6),
     cp = c,
@@ -84,7 +99,7 @@ optProj <- function(c, a, t) {
   )
 }
 
-funProj <- function(a, cp, tp, nrow, ncol) {
+theFunc <- function(a, cp, tp, nrow, ncol) {
   tcp <- sum(diag(cp))
   tap <- sum(a^2)
   amt <- matrix(a, nrow, ncol)
@@ -93,7 +108,7 @@ funProj <- function(a, cp, tp, nrow, ncol) {
   return(func)
 }
 
-grdProj <- function(a, cp, tp, nrow, ncol) {
+theGrad <- function(a, cp, tp, nrow, ncol) {
   amt <- matrix(a, nrow, ncol)
   aca <- crossprod(amt, cp %*% amt)
   eca <- eigen(aca)
