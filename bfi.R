@@ -1,6 +1,7 @@
+
 data(bfi, package = "psych")
 bfi <- as.matrix(bfi)[, 1:25]
-bfi <- impute(bfi, "mean")
+bfi <- e1071::impute(bfi, "mean")
 bfi <- apply(bfi, 2, function(x) x - mean(x))
 bfi <- apply(bfi, 2, function(x) x / sqrt(sum(x ^ 2)))
 cfi <- cor(bfi)

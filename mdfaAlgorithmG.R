@@ -1,6 +1,3 @@
-library(e1071)
-
-
 
 mdfaAlgorithmG <- function(c, a, t) {
   nrow <- nrow(a)
