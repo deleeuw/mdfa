@@ -475,10 +475,8 @@ $$
 \sectionbreak
 
 
-## Gradient and Newton Methods
+## Algorithm G
 
-
-### Gradient
 
 $$
 \sigma_\star(T)=\text{tr}\ X'X+\text{tr}\ T'T-2\|XT\|_\star=\text{tr}\ X'X+\text{tr}\ T'T-2\sum_{\nu=1}^m\lambda_\nu^\frac12(T'CT)
@@ -499,7 +497,8 @@ hmax <- mdfaAlgorithmG(maxwell, memm, uemm)
 print(hmax)
 ```
 
-### Hessian
+
+## Algorithm H
 
 
 The definition of $\mathcal{T}$ that was used is
@@ -586,6 +585,15 @@ abline(0, 1)
 ```
 The Emmett example is somewhat atypical, because the CFA model with three factors has a near perfect fit. This explains why the
 MDFA and ML solutions are nearly identical.
+
+```{r}
+hemm <- mdfaAlgorithmG(emmett, aemm, temm)
+```
+
+The samew solution is reached using Algorithm G.
+It requires 29 function evaluations and 27 gradient evaluations to arrive 
+at `r hemm$loss`.
+
 
 ## Maxwell
 
