@@ -44,7 +44,13 @@ abstract: TBD
 ```{r loadpackages, echo = FALSE}
 suppressPackageStartupMessages(library(knitr, quietly = TRUE))
 suppressPackageStartupMessages(library(tinytex, quietly = TRUE))
-source("mdfaOptim.R")
+source("mdfaAuxiliary.R")
+source("mdfaAlgorithmA.R")
+source("mdfaAlgorithmB.R")
+#source("mdfaAlgorithmC.R")
+source("mdfaAlgorithmG.R")
+source("emmett.R")
+source("maxwell.R")
 ```
 
 \sectionbreak
@@ -64,10 +70,8 @@ We say that $X=YT'$, with $Y$
 an $n\times p$ matrix and $T$ an $m\times p$ matrix, is a 
 *decomposition of order $p$* of $X$. Decompositions of various kinds play a key role in theoretical and numerical linear algebra (@stewart_98). 
 
-In this paper
-we are interested in the *factor analytic decomposition of order $p$*,
-which is characterized by $m\leq p\leq n$ and by the requirement $Y'Y=I$. In addition there may be constraints on $T$, which we write in the general form $T\in\mathcal{T}$, with $\mathcal{T}$
-a subset of $\mathbb{R}^{m\times p}$, the space of all $m\times p$ matrices.
+In this paper we are interested in the *factor analytic decomposition of order $p$*,
+which is characterized by $m\leq p\leq n$ and by the requirement $Y'Y=I$. In addition there may be constraints on $T$, which we write in the general form $T\in\mathcal{T}$, with $\mathcal{T}$ a subset of $\mathbb{R}^{m\times p}$, the space of all $m\times p$ matrices.
 Note that $Y$ is a "tall" matrix ($n\geq p$), while $T$ is "wide" ($m\leq p$).
 
 Factor analysis techniques aim to find a solution of the system
@@ -238,11 +242,11 @@ The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT
 
 ## MINRES
 
-There are several factor analytic decomposition techniques that use least squares loss functions\footnote{We use SSQ() forthe unweighted sum of squares of a matrix or vector.}. The oldest and most obvious one is
+There are several factor analytic decomposition techniques that use least squares loss functions\footnote{We use SSQ() for the unweighted sum of squares of a matrix or vector.}. The oldest and most obvious one is
 \begin{equation}
 \sigma(T)=\text{SSQ}(C-TT'),\label{eq-minres}
 \end{equation}
-where $\text{SSQ}()$ stands for ther unweighted sum of squares.
+where $\text{SSQ}()$ stands for the unweighted sum of squares.
 For CFA \eqref{eq-minres} becomes
 \begin{equation}
 \sigma(T)=\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
@@ -257,7 +261,7 @@ squares loss function
 \end{equation}
 which has the disadvantage that it assumes $D$ is known, or at least that there is a reasonable prior estimate of $D$. Minimizing \eqref{eq-young-whittle} has the advantage that the problem becomes a form of principal component analysis (PCA), in which the solution can be computed with a single SVD.
 
-It is tempting to use block relaxation heto minimize \eqref{eq-young-whittle}, alternating finding the optimum
+It is tempting to use block relaxation to minimize \eqref{eq-young-whittle}, alternating finding the optimum
 $F$ and $A$ for fixed $D$, and then repeating this iteratively with the new $D$ equal to
 \begin{equation}
 D^2=n^{-1}\text{diag}\ (X-FA')'(X-FA').\label{eq-yw}
@@ -292,8 +296,6 @@ There have been additional important contributions to MDFA in @adachi_12, @adach
 
 The Alternating Least Squares (ALS) algorithm proposed for MDFA by both Kiers (in @socan_03) and @deleeuw_C_04a alternates finding the optimum $Y$ for given $T$ and the optimum $T$ for given $Y$.
 
-### Optimum Loadings for Given Scores
-
 Finding the optimum $T$ for given $Y$ is  straightforward.
 We complete the square, as in
 \begin{equation}
@@ -308,8 +310,6 @@ $$
 T=\begin{bmatrix}A&D\end{bmatrix}=\begin{bmatrix}X'F&\text{diag}(X'U)\end{bmatrix}.
 $$ 
 For confirmatory MDFA in which we require some loadings to be equal to each other and/or others to be equal to given constants finding $T$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
-
-### Optimum Scores for given Loadings
 
 Also
 \begin{equation}
@@ -389,7 +389,7 @@ in \eqref{eq-als1} and \eqref{eq-als2} use the matrices $X$ and $Y$, which each
 have $n$ rows. Every iteration involves multiplications with these
 large matrices. This will tend to be 
 expensive computationally. It has been pointed out by @adachi_12
-that we can rewrite the ALS algorithm so that it only 
+that we can rewrite the ALS algorithm in such a way that it only 
 involves matrices of order $m$. This alternative derivation of
 the algorithm has the additional property that it can be
 applied to $C$ without having to know $X$, which has obvious
@@ -407,13 +407,13 @@ $$
 Y=XT(T'CT)^{-1/2}+K_\perp^{\ } SL_\perp'
 $$
 where $(T'CT)^{-1/2}$ is the square root of the Moore-Penrose inverse of 
-$T'CT$. Thus
+$T'CT$, $K_\perp$ and $L_\perp$ are orthonormal bases for the null
+spaces of $XT$, and $S$ is arbitrary.
 $$
-T^{(k+1)}=X'Y=CT^{(k)}(\{T^{(k)}\}'CT^{(k)})^{-\frac12}+X'K_\perp^{\ } SL_\perp'
+T^{(k+1)}=\Pi_T(X'Y)=\Pi_T\left\{CT^{(k)}(\{T^{(k)}\}'CT^{(k)})^{-\frac12}+X'K_\perp^{\ } SL_\perp'\right\}
 $$
 We have $K_\perp'XT=0$. If $T$ has rank $m$ then this implies
-$X'K_\perp=0$
-which leads to the result in the theorem.
+$X'K_\perp=0$ which leads to the result in the theorem.
 :::
 
 Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which 
@@ -422,55 +422,57 @@ projected on the set $\mathcal{T}$ defined by the template. The ALS interpretati
 algorithm shows directly that a decreasing sequence of loss function values is produced, which
 proves convergence of $T$ under the usual identification and rank conditions.
 
-
-
-
-
-
 ## Algorithm C
 
 In @deleeuw_C_04a an alternative ALS algorithm for CFA
-is mentioned and briefly described. It minimizes
-$$
+is mentioned and briefly described. It minimizes the CFA loss
+\begin{equation}
 \sigma(F,A,U,D)=SSQ(X-FA'-UD),
-$$
-but instead of alternating an update of $Y=(F\ U)$ for given $T=(A\ D)$ and of $T=(A\ D)$ for given $Y=(F\ U)$, it uses a
-slightly different strategy. The three steps in an ALS
-iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for
-given $(F,U,D)$, and $(A, D)$ for given $(F, U)$. The third step is the same as in Algorithm A, the first two steps
-are different.
+\end{equation}
+with the constraints $F'F=I$, $U'F=0$, $U'U=I$, $A\in\mathcal{A}$, and $D\in\mathcal{D}$.
+Write $\Pi_A()$ and $\Pi_D()$ for the least squares projectors on $\mathcal{A}$ and
+$\mathcal{D}$. 
 
-Consider minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is
-equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying $F'F=I$ and $F'U=0$. Now $F'U=0$ if and only if $F=U_\perp V$,
-where $U_\perp$ is an $n\times(n-m)$ orthonormal basis for the complement
-of $U$ and $V$ is any $(n-m)\times q$ matrix. Thus we must maximize $\text{tr}\ V'U_\perp'XA$ over $V$ satisfying $V'V=I$. The optimum $V$ is the projection of $U_\perp'XA$
-on the set of orthonormal $(n-m)\times q$ matrices. Thus
-$$
-F=U_\perp V=U_\perp^{\ } U_\perp'XA
+In Algorithm A we use a two-block ALS strategy. We alternate the update of $Y=(F\mid U)$ for given $T=(A\mid D)$ and of $T=(A\mid D)$ for given $Y=(F\mid U)$. In Algorithm $C$ we use
+a four-block ALS strategy. The four steps in an ALS
+iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for given $(F,A,D)$,  $A$ for given $(F, U, D)$, and $D$ for given $(A,F,U)$. The third and fourth step are the same as in Algorithm A, the first two steps are different.
+
+Start the ALS cycle with minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying $F'F=I$ and $F'U=0$. Now $F'U=0$ if and only if $F=U_\perp V$,
+where $U_\perp$ is an $n\times(n-m)$ orthonormal basis for the complement of $U$ and $V$ is any $(n-m)\times q$ matrix. Thus we must maximize $\text{tr}\ V'U_\perp'XA$ over $V$ satisfying $V'V=I$. The optimum $V$ is the projection of $U_\perp'XA$
+on the set of orthonormal $(n-m)\times q$ matrices. We use the symbol $\leftarrow$
+for updates in iterations. Thus $Z\leftarrow f(Z)$ means "the new $Z$ becomes 
+function $f$ of the previous $Z$", which is the same thing as $Z^{(k+1)}=f(Z^{(k)})$,
+but without the ugly superscripts. We have
+\begin{subequations}
+\begin{equation}
+F\leftarrow U_\perp V=U_\perp^{\ } U_\perp'XA
 (A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}.
-$$
-If we update $A$ next to $A^+$ then
-$$
-A^+=X'F=X'U_\perp^{\ } U_\perp'XA
-(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}
-$$
-Now use
-$U_\perp^{\ } U_\perp'=I-UU'$ and define $\tilde D=X'U$,
-so that $D=\text{diag}(\tilde D)$. Then ... becomes
-$$
-A^+=(C-\tilde D\tilde D')A[A'(C-\tilde D\tilde D')A]^{-1/2}
-$$
-
+\end{equation}
 In the same way the optimum $U$ for given $(F,A,D)$ is
-$$
-U=F_\perp^{\ } F_\perp'XD
+\begin{equation}
+U\leftarrow F_\perp^{\ } F_\perp'XD
 (DX'F_\perp^{\ } F_\perp'XD)^{-1/2}.
-$$
-which, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $X'F=A$, gives the update
-$$
-D^+=\text{diag}(X'U)=\text{diag}\left\{(C-AA')D
-[D(C-AA')D]^{-1/2}\right\}
-$$
+\end{equation}
+\end{subequations}
+In each ALS cycle we update in the order $(F,A,U,D)$. Using $\leftarrow$ for the
+update, we have
+\begin{equation}
+A\leftarrow\Pi_A(X'F)=\Pi_A(X'U_\perp^{\ } U_\perp'XA
+(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2})
+\end{equation}
+Now use
+$U_\perp^{\ } U_\perp'=I-UU'$ and define $\tilde D:=X'U$,
+so that $D=\text{diag}(\tilde D)$. Then ... becomes
+\begin{subequations}
+\begin{equation}
+A\leftarrow \Pi_A\left\{(C-\tilde D\tilde D')A[A'(C-\tilde D\tilde D')A]^{-1/2}\right\}
+\end{equation}
+In the same way, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $\tilde A:=X'F$, gives the update
+\begin{equation}
+D\leftarrow\Pi_D(X'U)=\Pi_D\left\{(C-\tilde A\tilde A')D
+[D(C-\tilde A\tilde A')D]^{-1/2}\right\}
+\end{equation}
+\end{subequations}
 
 \sectionbreak
 
@@ -539,9 +541,8 @@ h <- mdfaAlgorithmB(emmett, aemm, temm, itmax = 1000, verbose = FALSE)
 ```
 
 As the initial estimate for $A$ we use the first three
-principal components, scaled to the length of the corresponding eigenvalues. The initial estimate of $D$ is the square root of the diagonal of $I-AA'$. Algorithm B converges in `r h$itel`
-iterations to a loss of `r h$loss`, where convergence is defined
-as a loss-decrease in successive iterations of less than 
+principal components, scaled to the length of the corresponding eigenvalues. The initial estimate of $D$ is the square root of the diagonal of $I-AA'$. Algorithm B converges in `r h$itel` iterations to a loss of `r h$loss`, where convergence is defined
+by a loss-decrease in successive iterations of less than 
 `r 1e-10`. The MDFA uniquenesses are
 
 ```{r alga_d, echo = FALSE}
@@ -590,7 +591,7 @@ MDFA and ML solutions are nearly identical.
 hemm <- mdfaAlgorithmG(emmett, aemm, temm)
 ```
 
-The samew solution is reached using Algorithm G.
+The same solution is reached using Algorithm G.
 It requires 29 function evaluations and 27 gradient evaluations to arrive 
 at `r hemm$loss`.
 
@@ -659,52 +660,67 @@ plot(maxwell, ml, col = "RED")
 abline(0, 1)
 ```
 
+## BFI
+
+
 \sectionbreak
 
 # Discussion
 
 ## Additional Constraints
 
-From the CFA definition ...-... we see that $A=X'F$ and 
+The CFA definition ...-... implies $A=X'F$ and 
 $D=X'U$. In an exploratory MDFA solution we do have
 $A=X'F$ but $D=\text{diag}(X'U)$. As a consequence
 unique factor $i$ in the solution can be correlated
 with variables $j$, where $j\neq i$. This is contrary
 the very idea of unique factors. If $X'U$ is not
-diagonal then this indicates a lack of CFA fit. It may also be sufficiently counter-intuitive to prevent it from
-happening.
+diagonal then this indicates a lack of CFA fit. 
+It may also be sufficiently counter-intuitive to prevent 
+it from happening.
 
-In the thesis of Socan a variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the version of MDFA in @stegeman_16, which they call the *Data Factor Model*,
+In the thesis of Socan ab ALS variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the version of MDFA in @stegeman_16, which they call the *Data Factor Model*,
 it is even required that $U'X=D$. In the case of perfect fit the constraint $U'X=D$ is automatically
 satisfied, but it will not be so for the least squares fit. These additional constraints
 on MDFA complicate the ALS algorithm and take us in the direction of alternative methods for 
 computing factor scores. We do not impose those constraints in this paper.
 
-## Correlated Errors
+## Correlated Factors and Errors
 
 ## Heywood Cases
 
 The CFA equations $C=AA'+D^2$ imply that $0\lesssim D^2\lesssim C$ and $0\lesssim AA'\lesssim C$. This in turn implies that $D^2\lesssim\text{diag}(C)$.
-In many forms of CFA it is possible that the estimated
-uniqueness \\
+For many CFA techniques it is possible that the estimated
+uniqueness do not satisfy these inequality constraints
+and are consequently "improper" or Heywood cases.
 
 ::: {#thm-bounds}
-In the MDFA solution $AA'\lesssim C$ and 
+In the MDFA solution $0\lesssim AA'\lesssim C$ and 
 $0\lesssim D^2\lesssim\text{diag}(C)$.
 :::
 ::: {.proof}
+At the solution we have $A=X'F$ and thus $AA'=X'FF'X$.
+Because $FF'\lesssim I$ we have $AA'\lesssim C$. At the
+solution we also have $D=\text{diag}(X'U)$, or
+$d_j=x_j'u_j$. Since $u_j'u)j=1$  by Cauchy-Schwartz 
+$d_j^2\leq x_j'x_j=c_{jj}$.
 :::
 
-Note that we have not shown that $D^2\lesssim C$
+@thm-bounds shows that worst-case Heywood cases 
+do not happen in MDFA. Uniquenesses are always non-negative
+and bounded above by the diagonal of $C$, i.e. for correlation 
+matrices they are always between zero and one.
+Note however that we have not shown that $D^2\lesssim C$,
+so not all improper solutions are excluded.
 
-## Scale Free
+## Scale Freeness
 
 An MDFA procedure $X\rightarrow(Y,T)$ maps data matrices
-$X$ to a pair of scores $Y$ and loadings $T$. The
+$X$ to a scores $Y$ and loadings $T$. The
 procedure is scale-free if for all diagonal $\Phi$
-we have $X\Phi\rightarrow(Y,T\Phi)$. The MDFA 
-procedure we have discussed so far is not scale-free, but 
-it can be made scale-free in various ways.
+we have $X\Phi\rightarrow(Y,T\Phi)$. The MDFA least squares
+techniques we have discussed so far are not scale-free, but 
+they can be made scale-free in various ways.
 
 The first way is traditional. We normalize the data
 in $X$ to unit length, so that $C=X'X$ becomes a
@@ -733,23 +749,17 @@ $$
 \sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ T'WT-2\ \text{tr}\ Y'XWT,
 $$
 which means the optimal $Y$ for given $T$ is the 
-(unweighted) projection of $XWT$ on the orthonormal $n\times p$ matrices.
+(unweighted) projection of $XWT$ on the orthonormal 
+$n\times p$ matrices.
 
 As in the unweighted case we can combine the two ALS
 steps into a one-step upgrade for $T$.
 $$
-T^{(k+1)}=\Pi_T(CWT^{(k)}(\{T^{(k)}\}'WCWT^{(k)})^{-1/2})
+T^{(k+1)}=\Pi_T(CWT(\{T^{(k)}\}'WCWT^{(k)})^{-1/2})
 $$
 
+## Uniqueness
 
-
-
-$$
-\text{tr}\ (X-YT')W(X-YT')'=\text{tr}\ XWX'+\text{tr}\ T'WT-2\ \text{tr}\ Y'XWT
-$$
-$$
-(F U)= procrustus(XW(A+D))
-$$
 
 ## Statistical Considerations
 

@@ -8,6 +8,6 @@ cfi <- cor(bfi)
 ceig <- eigen(cfi)
 cvec <- ceig$vectors[, 1:5]
 cval <- diag(sqrt(ceig$values[1:5]))
-ccom <- cvec %*% cval
-cemm <- cbind(ccom, diag(sqrt(1 - rowSums(ccom^2))))
-vemm <- cbind(matrix(1, 25, 5), diag(25))
+aold <- cvec %*% cval
+dold <- diag(sqrt(1 - rowSums(ccom^2)))
+told <- cbind(ccom, demm)
