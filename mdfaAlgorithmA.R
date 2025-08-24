@@ -1,24 +1,17 @@
 mdfaAlgorithmA <- function(x,
-                           aold,
-                           dold,
-                           projA = mdfaProjectA,
-                           projD = mdfaProjectD,
+                           told,
+                           proj = mdfaProject,
                            itmax = 1000,
                            eps = 1e-10,
                            verbose = TRUE) {
-  m <- ncol(x)
-  q <- ncol(aold)
-  told <- cbind(aold, dold)
+  m <- nrow(told)
   svxa <- svd(x %*% told)
   yold <- tcrossprod(svxa$u[, 1:m], svxa$v[, 1:m])
   resi <- x - tcrossprod(yold, told)
   fold <- sum(resi^2)
   itel <- 1
   repeat {
-    tnew <- crossprod(x, yold)
-    anew <- projA(tnew[, 1:q])
-    dnew <- projD(tnew[, -(1:q)])
-    tnew <- cbind(anew, dnew)
+    tnew <- proj(crossprod(x, yold))
     svxa <- svd(x %*% tnew)
     ynew <- tcrossprod(svxa$u[, 1:m], svxa$v[, 1:m])
     resi <- x - tcrossprod(ynew, tnew)
@@ -43,19 +36,14 @@ mdfaAlgorithmA <- function(x,
   }
   return(
     list(
-      f = ynew[, 1:q],
-      u = ynew[, -(1:q)],
-      loadings = anew,
-      uniquenesses = diag(dnew),
+      ydet = ynew,
+      tmat = tnew,
       loss = fnew,
       itel = itel
     ))
 }
 
-mdfaProjectA <- function(a) {
-  return(a)
-}
-
-mdfaProjectD <- function(d) {
-  return(diag(diag(d)))
+mdfaProject <- function(t) {
+  q <- ncol(t) - nrow(t)
+  return(cbind(t[, 1:q], diag(diag(t[, -(1:q)]))))
 }

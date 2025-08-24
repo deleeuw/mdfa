@@ -1,4 +1,5 @@
 library(numDeriv)
+library(RSpectra)
 
 data(cattell, package = "psych")
 dold <- 1 / diag(solve(cattell))
@@ -13,14 +14,16 @@ lsfa <- function(dold,
                  jeps = 1e-15,
                  jverbose = TRUE) {
   itel <- 1
-  eold <- eigen(cmat - diag(dold))
-  fold <- sum(eold$values[-(1:p)]^2)
-  aold <- eold$vectors[, 1:p] %*% sqrt(diag(eold$values[1:p]))
+  eold <- eigs_sym(cmat - diag(dold), p)
+  eval <- eold$values
+  fold <- sum((cmat - diag(dold)) ^ 2) - sum(eval ^ 2)
+  aold <- eold$vectors %*% sqrt(diag(eval))
   repeat {
     dnew <- diag(cmat - tcrossprod(aold))
-    enew <- eigen(cmat - diag(dnew))
-    fnew <- sum(enew$values[-(1:p)]^2)
-    anew <- enew$vectors[, 1:p] %*% sqrt(diag(enew$values[1:p]))
+    enew <- eigs_sym(cmat - diag(dnew), p)
+    eval <- enew$values
+    fnew <- sum((cmat - diag(dnew)) ^ 2) - sum(eval ^ 2)
+    anew <- enew$vectors %*% sqrt(diag(eval))
     if (iverbose) {
       cat(
         "itel ",
@@ -64,6 +67,8 @@ lsfa <- function(dold,
     dold <- dnew
     fold <- fnew
   }
+  enew <- eigen(cmat - diag(dnew))
+  anew <- enew$vectors[, 1:p] %*% sqrt(diag(enew$values[1:p]))
   return(list(a = anew, d = dnew, f = fnew, itel = itel, jtel = jtel))
 }
 

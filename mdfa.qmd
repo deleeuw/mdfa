@@ -272,6 +272,11 @@ This in fact corresponds to alternating minimization of the loss function
 \end{equation}
 But \eqref{eq-lawley41} is the negative likelihood loss function for the fixed factor model from @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a perfect but trivial solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
 
+The file lsfa.R in the repository has a function lsfa() for MINRES factor analysis. It
+needs an initial estimate of $D$, for which we can take $\text{diag}^{-1}(C^{-1})$.
+Then it applies a small number of Thomson iterations before switching to Newton
+iterations. First and second derivatives are taken from @deleeuw_E_25d. Eigenvalue/eigenvectors calculations use the RSpectra package (@qiu_mei_24).
+
 ## MDFA
 
 A more direct way of fitting the full CFA model was discussed (independently and around the same time) in the dissertation of @socan_03 and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as Matrix Decomposition Factor analysis (MDFA). Socan attributes MDFA (which they call "Direct Factor Analysis") to a 2001 personal communication and some unpublished notes of his advisor Henk Kiers.
@@ -285,7 +290,7 @@ MDFA was not immediately accepted as an alternative factor analysis technique. I
 version of MDFA (@unkel_trendafilov_10) and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11). There is a nice review of these contributions in @unkel_trendafilov_10, with an update in @trendafilov_unkel_krzanowski_13.
 
 There have been additional important contributions to MDFA in @adachi_12, @adachi_trendafilov_18,
-@stegeman_16, @terada_25, @yamashita_25. We will discuss these recent contributions in various places in this paper. When googling MDFA, keep in mind that Adachi initially used "Data-Fitting Factor Analysis", while Stegeman used the "Data Factor Model". 
+@stegeman_16, @terada_25, @yamashita_25. We will discuss these recent contributions in various places in our present paper. When googling MDFA, keep in mind that Adachi initially used "Data-Fitting Factor Analysis", while Stegeman used the "Data Factor Model". 
 
 
 \sectionbreak
@@ -307,87 +312,128 @@ $X'Y$ on the set of matrices $\mathcal{T}$.
 
 For exploratory CFA this gives 
 $$
-T=\begin{bmatrix}A&D\end{bmatrix}=\begin{bmatrix}X'F&\text{diag}(X'U)\end{bmatrix}.
+T=\begin{bmatrix}A&\mid&D\end{bmatrix}=\begin{bmatrix}X'F&\mid&\text{diag}(X'U)\end{bmatrix}.
 $$ 
 For confirmatory MDFA in which we require some loadings to be equal to each other and/or others to be equal to given constants finding $T$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
 
 Also
 \begin{equation}
-\sigma(T,Y)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ Y'XT.
+\sigma(T,Y)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ Y'XT.\label{eq-sigmay}
 \end{equation}
 We have to maximize $\text{tr}\ Y'XT$ over all
 $n\times p$ orthonormal $Y$.
-The following theorem
-was given earlier, using somewhat different terminology, in the Appendix of @deleeuw_C_04a. Remember that the *nuclear norm* (a.k.a. the 
-*trace norm*) $\|Z\|_\star$ of a matrix $Z$ is the sum of its singular values. The nuclear norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
+We start with some general lemmas. Remember that the *trace norm* (a.k.a. the 
+*nuclear norm*) $\|Z\|_\star$ of a matrix $Z$ is the sum of its singular values. The trace norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
 
-::: {#thm-procrustus}
-$$
-\max_{Y'Y=I}\text{tr}\ Y'XT=\|XT\|_\star
-$$
+::: {#lem-procrustus}
+If $X$ and $Y$ are $n\times p$ with $Y'Y=I$ then 
+\begin{equation}
+\text{tr}\ Y'X\leq\|X\|_\star.\label{eq-tnorm}
+\end{equation}
 :::
 
 :::{.proof}
-The stationary equations are $XT=YM$ with $Y'Y=I$ and $M$ a symmetric matrix of Lagrange multipliers of order $p$. It follows that $M^2=T'Y'YT$ and thus $M$ is the (unique) positive semi-definite
-symmetric square root $\smash{(T'Y'YT)^{1/2}}$
-(or its negative, for a minimum). At the maximum $\text{tr}\ Y'XT=\text{tr}\ M=\|XT\|_\star$.
+The stationary equations are $X=YM$ with $Y'Y=I$ and $M$ a symmetric matrix of Lagrange multipliers of order $p$. It follows that $M^2=X'X$ and thus $M$ is the (unique) positive semi-definite symmetric square root $\smash{(X'X)^{1/2}}$
+At the maximum $X=YM$ implies $\text{tr}\ Y'X=\text{tr}\ M=\|X\|_\star$.
 :::
 
-Note that @thm-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $XT$ of rank $m$.
+Note that @lem-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $X$ of rank $r$.
 
-::: {#thm-construct}
-The $n\times m$ orthonormal $Y$ maximizes $\text{tr}\ Y'XT$, with 
+::: {#lem-construct}
+The $n\times p$ orthonormal $Y$ maximizes $\text{tr}\ Y'X$, with 
 \begin{equation}
-XT=\begin{bmatrix}K&K_\perp\end{bmatrix}
+X=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
-\begin{bmatrix}L'&L_\perp'\end{bmatrix},\label{eq-xa}
+\begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-xa}
 \end{equation}
 if and only if
 \begin{equation}
 Y=KL'+K_\perp^{\ }SL_\perp',\label{eq-yopt}
 \end{equation}
-for some $(n-r)\times(m-r)$ matrix $S$ with $S'S=I$.
+for some $(n-r)\times(p-r)$ matrix $S$ with $S'S=I$.
 :::
 
 ::: {.proof}
-Partition the columnwise orthonormal $n\times m$ matrix 
-$Y$ in the same way as $XT$.
+Partition the columnwise orthonormal $n\times p$ matrix 
+$Y$ in the same way as $X$.
 \begin{equation}
 Y=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}P&Q\\R&S\end{bmatrix}
-\begin{bmatrix}L'&L_\perp'\end{bmatrix},\label{eq-odecomp}
+\begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-odecomp}
 \end{equation}
-where the four-block partitioned matrix in the middle of \eqref{eq-odecomp} must be orthonormal again. Now $\text{tr}\ Y'XA=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner\footnote{$A\lesssim B$ means $A-B$ positive semi-definite.} sense (because we must have
+where the four-block partitioned matrix in the middle of \eqref{eq-odecomp} must be orthonormal. Now $\text{tr}\ Y'X=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner\footnote{$A\lesssim B$ means $A-B$ positive semi-definite.} sense (because we must have
 $P'P+R'R=I$). It follows that the diagonal elements of $P$ must be less than or equal to one, and thus the maximum of
-$\text{tr}\ Y'XT$ is $\text{tr}\ \Lambda$, uniquely attained for $P=I$.
+$\text{tr}\ Y'X$ is $\text{tr}\ \Lambda$, uniquely attained for $P=I$.
 But $P=I$ implies that at the maximum $R=0$ and $Q=0$, and $S$ is any
-$(n-r)\times(m-r)$ matrix with $S'S=I$. Thus the optimum $Y$ is
+$(n-r)\times(p-r)$ matrix with $S'S=I$. Thus the optimum $Y$ is
 as given by \eqref{eq-yopt}.
 :::
 
-It is important to note that if $Y=KL'$ then $Y'Y=LL'$, which is of rank $m<p$ and thus not equal to
-the identity. Also note that formula \eqref{eq-yopt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. 
+We can now apply the lemmas to minimizing the loss in \eqref{eq-sigmay}.
+
+::: {#thm-procrustus}
+If the $n\times p$ matrix $XT$ has rank $m$ with $m<p<n$ and "fat" singular value decomposition
+\begin{equation}
+XT=\begin{bmatrix}K&K_\perp\end{bmatrix}
+\begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
+\begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-xta}
+\end{equation}
+then the maximum of $\text{tr}\ Y'XT$ over $n\times p$ orthonormal $Y$ is 
+$\|XT\|_\star$, attained for all $Y$ with
+\begin{equation}
+Y=KL'+K_\perp SL_\perp',\label{eq-yoptt}
+\end{equation}
+where $S$ is any
+$(n-r)\times(p-r)$ matrix with $S'S=I$
+:::
+::: {.proof}
+Directly from @lem-construct.
+:::
+
+It is important to note that in MDFA we cannot take $Y=KL'$, because then $Y'Y=LL'$, which is of rank $r\leq m$ and thus not equal to the identity if $r<p$. Also note that formula \eqref{eq-yoptt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. The fundamental theorem
+merely adds that the optimal $Y$ makes loss equal to zero if $C=TT'$.
+
+It factor analytic literature it is often said that the factor scores $Y$ have the
+"determinate" part $KL'$ and the "indeterminate" part $K_\perp SL_\perp'$. There
+are some simple rank conditions which imply that the indeterminate part does not play a
+role in Algorithm A, which uses $X'Y$ to update $T$,  and in the fitted values, which uses $YT'$.
+
+::: {#cor-unique}
+If $\text{rank}(T)=m$ and $Y$ is given by \eqref{eq-yoptt} then $X'Y=X'KL'=CT(T'CT)^{-1/2}$. If $\text{rank}(X)=m$ then $YT'=KL'T'=XT(T'CT)^{-1/2}T'$.
+:::
+::: {.proof}
+We know that $K_\perp'XT=0$. If $\text{rank}(T)=m$ this implies $X'K_\perp=0$.
+If $\text{rank}(X)=m$ then $XTL_\perp=0$ implies $L_\perp'T=0$. In both cases
+the indeterminate part of $Y$ contributes zero.
+:::
+
+The repository has a file mdfaAlgorithmA.R, with the function mdfaAlgorithmA() implementing
+Algorithm A. There is a function mdfaProject() which take care of the least squares projections on $\mathcal{T}$. By default mdfaProject() replaces the matrix with the last $m$ columns of $T$ by its diagonal, but replacing the default projection routine allows us to incorporate any set of constraints. We emphasize that mdfaAlgorithmA() updates $Y$
+using the dtertimate part $KL'$ only, which means that we do not have $Y'Y=I$. 
+@cor-unique show that this does not impact the sequences of loss function values and of iterates for $T$, but it does mean that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate
+part, but it remains true that this does not solve the MDFA problem, which requires $Y'Y=I$.
+
 
 ## Algorithm B
 
 Write $\Pi_Y()$ for the least squares projection of
 a matrix on the columnwise orthonormal matrices of the same
 dimension. Also write $\Pi_T()$ for least squares
-projection on $\mathcal{T}$. Then ALS iteration $k$ is
+projection on $\mathcal{T}$. Then ALS iteration $k$ of Algorithm A is
 \begin{subequations}
 \begin{align}
 Y^{(k)}&=\Pi_Y(XT^{(k)}),\label{eq-als1}\\
 T^{(k+1)}&=\Pi_T(X'Y^{(k)}).\label{eq-als2}
 \end{align}
 \end{subequations}
-It  does not matter how we choose $S$ in \eqref{eq-yopt}, because for all
-choices of $S$ we have $\text{tr}\ Y'XA=\|XA\|_\star$, and thus all choices of $S$ give
-the same loss  function value.
+If we assume that $\text{rank}(X)=\text{rank}(T)=m$ then it  does not matter how we choose $S$ in \eqref{eq-yopt}, because by @cor-unique for all
+choices of $S$ we have $\text{tr}\ Y'XT=\|XT\|_\star$, and all choices of $S$ give
+the same update and the same loss function value.
 
 In most factor analytic applications we have $n>>m$. The computations 
 in \eqref{eq-als1} and \eqref{eq-als2} use the matrices $X$ and $Y$, which each
 have $n$ rows. Every iteration involves multiplications with these
-large matrices. This will tend to be 
+potentially very large matrices. This will tend to be 
 expensive computationally. It has been pointed out by @adachi_12
 that we can rewrite the ALS algorithm in such a way that it only 
 involves matrices of order $m$. This alternative derivation of
@@ -659,6 +705,9 @@ ml <- tcrossprod(maxml_a) + diag(maxmld)
 plot(maxwell, ml, col = "RED")
 abline(0, 1)
 ```
+
+## Cattell
+
 
 ## BFI
 

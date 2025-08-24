@@ -1,27 +1,30 @@
-mdfaAlgorithmB <- function(c,
-                           aold,
-                           template,
-                           itmax = 100,
+library(RSpectra)
+source("mdfaAuxiliary.R")
+
+mdfaAlgorithmB <- function(cmat,
+                           told,
+                           proj = mdfaProject,
+                           itmax = 1000,
                            eps = 1e-10,
                            verbose = TRUE) {
   itel <- 1
-  m <- nrow(c)
-  p <- ncol(aold)
+  m <- nrow(told)
+  p <- ncol(told)
   q <- p - m
-  ssqc <- sum(diag(c))
-  ssqa <- sum(aold^2)
-  aca <- crossprod(aold, c %*% aold)
-  eca <- eigen(aca)
-  fold <- ssqc + ssqa - 2 * sum(sqrt(eca$values[1:m]))
+  ssqc <- sum(diag(cmat))
+  ssqa <- sum(told^2)
+  tct <- crossprod(told, cmat %*% told)
+  ect <- eigs_sym(tct, m)
+  fold <- ssqc + ssqa - 2 * sum(sqrt(ect$values))
   repeat {
-    evc <- eca$vectors[, 1:m]
-    eva <- sqrt(eca$values[1:m])
+    evc <- ect$vectors
+    eva <- sqrt(ect$values)
     mva <- evc %*% diag(1 / eva) %*% t(evc)
-    anew <- template * (c %*% aold %*% mva)
-    aca <- crossprod(anew, c %*% anew)
-    eca <- eigen(aca)
-    ssqa <- sum(anew^2)
-    fnew <- ssqc + ssqa - 2 * sum(sqrt(eca$values[1:m]))
+    tnew <- proj(cmat %*% told %*% mva)
+    tct <- crossprod(tnew, cmat %*% tnew)
+    ect <- eigs_sym(tct, m)
+    ssqa <- sum(tnew^2)
+    fnew <- ssqc + ssqa - 2 * sum(sqrt(ect$values))
     if (verbose) {
       cat(
         "itel",
@@ -37,19 +40,17 @@ mdfaAlgorithmB <- function(c,
       break
     }
     itel <- itel + 1
-    aold <- anew
+    told <- tnew
     fold <- fnew
   }
-  loadings <- anew[, 1:q]
-  uniquenesses <- diag(anew[, -(1:q)]) ^ 2
-  mat <- crossprod(loadings, diag(1 / uniquenesses) %*% loadings)
-  mvc <- eigen(mat)$vectors
-  loadings <- loadings %*% mvc
   return(list(
-    loadings = loadings,
-    uniquenesses = uniquenesses,
+    tmat = tnew,
     loss = fnew,
     itel = itel
   ))
 }
 
+mdfaProject <- function(t) {
+  q <- ncol(t) - nrow(t)
+  return(cbind(t[, 1:q], diag(diag(t[, -(1:q)]))))
+}

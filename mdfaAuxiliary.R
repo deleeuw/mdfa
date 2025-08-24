@@ -21,3 +21,21 @@ matrixPower <- function(x, p = 1 / 2) {
   epow <- eval^p
   return(evec %*% diag(epow) %*% t(evec))
 }
+
+mdfaConvertTtoAD <- function(tmat) {
+  q <- ncol(tmat) - nrow(tmat)
+  loadings <- tmat[, 1:q]
+  uniquenesses <- diag(tmat[, -(1:q)]) ^ 2
+  mat <- crossprod(loadings, diag(1 / uniquenesses) %*% loadings)
+  mvc <- eigen(mat)$vectors
+  loadings <- loadings %*% mvc
+  return(list(loadings = loadings, uniquenesses = uniquenesses))
+}
+
+mdfaComputeYfromT <- function(x, tmat) {
+  m <- ncol(x)
+  n <- nrow(x)
+  xt <- x %*% tmat
+  et <- svd(xt)
+  ydet <- tcrossprod(et$u[, 1:m], et$v[, 1:m])
+}
