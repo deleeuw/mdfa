@@ -1,2 +1,5 @@
 knitr
 tinytex
+RSpectra
+microbenchmark
+ggplot2

@@ -44,13 +44,16 @@ abstract: TBD
 ```{r loadpackages, echo = FALSE}
 suppressPackageStartupMessages(library(knitr, quietly = TRUE))
 suppressPackageStartupMessages(library(tinytex, quietly = TRUE))
+suppressPackageStartupMessages(library(microbenchmark, quietly = TRUE))
+suppressPackageStartupMessages(library(ggplot2, quietly = TRUE))
 source("mdfaAuxiliary.R")
 source("mdfaAlgorithmA.R")
 source("mdfaAlgorithmB.R")
-#source("mdfaAlgorithmC.R")
 source("mdfaAlgorithmG.R")
 source("emmett.R")
 source("maxwell.R")
+source("cattell.R")
+source("bfi.R")
 ```
 
 \sectionbreak
@@ -408,10 +411,11 @@ the indeterminate part of $Y$ contributes zero.
 :::
 
 The repository has a file mdfaAlgorithmA.R, with the function mdfaAlgorithmA() implementing
-Algorithm A. There is a function mdfaProject() which take care of the least squares projections on $\mathcal{T}$. By default mdfaProject() replaces the matrix with the last $m$ columns of $T$ by its diagonal, but replacing the default projection routine allows us to incorporate any set of constraints. We emphasize that mdfaAlgorithmA() updates $Y$
-using the dtertimate part $KL'$ only, which means that we do not have $Y'Y=I$. 
-@cor-unique show that this does not impact the sequences of loss function values and of iterates for $T$, but it does mean that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate
-part, but it remains true that this does not solve the MDFA problem, which requires $Y'Y=I$.
+Algorithm A. There is a function mdfaProject() which take care of the least squares projections on $\mathcal{T}$. By default mdfaProject() replaces the matrix with the last $m$ columns of $T$ by its diagonal, but replacing the default projection routine allows us to incorporate any set of constraints. 
+
+We emphasize that mdfaAlgorithmA() updates $Y$
+using the determinate part $KL'$ only, which means that in our iterations we do not have $Y'Y=I$. @cor-unique show that this does not impact the sequences of loss function values and of iterates for $T$, but it does mean that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate part, but it remains true that this does not solve the original MDFA problem, which requires $Y'Y=I$. Also computing a proper $Y$ corresponding with the optimal $T$
+forces us to make a choice of $S$ in \eqref{eq-yoptt}.
 
 
 ## Algorithm B
@@ -463,64 +467,9 @@ $X'K_\perp=0$ which leads to the result in the theorem.
 :::
 
 Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which 
-means finding the $m$ largest eigenvalues and their corresponding eigenvectors. The update is then
-projected on the set $\mathcal{T}$ defined by the template. The ALS interpretation of the
+means finding the $m$ largest eigenvalues and their corresponding eigenvectors. The update is then projected on the set $\mathcal{T}$ defined by the template. The ALS interpretation of the
 algorithm shows directly that a decreasing sequence of loss function values is produced, which
 proves convergence of $T$ under the usual identification and rank conditions.
-
-## Algorithm C
-
-In @deleeuw_C_04a an alternative ALS algorithm for CFA
-is mentioned and briefly described. It minimizes the CFA loss
-\begin{equation}
-\sigma(F,A,U,D)=SSQ(X-FA'-UD),
-\end{equation}
-with the constraints $F'F=I$, $U'F=0$, $U'U=I$, $A\in\mathcal{A}$, and $D\in\mathcal{D}$.
-Write $\Pi_A()$ and $\Pi_D()$ for the least squares projectors on $\mathcal{A}$ and
-$\mathcal{D}$. 
-
-In Algorithm A we use a two-block ALS strategy. We alternate the update of $Y=(F\mid U)$ for given $T=(A\mid D)$ and of $T=(A\mid D)$ for given $Y=(F\mid U)$. In Algorithm $C$ we use
-a four-block ALS strategy. The four steps in an ALS
-iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for given $(F,A,D)$,  $A$ for given $(F, U, D)$, and $D$ for given $(A,F,U)$. The third and fourth step are the same as in Algorithm A, the first two steps are different.
-
-Start the ALS cycle with minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying $F'F=I$ and $F'U=0$. Now $F'U=0$ if and only if $F=U_\perp V$,
-where $U_\perp$ is an $n\times(n-m)$ orthonormal basis for the complement of $U$ and $V$ is any $(n-m)\times q$ matrix. Thus we must maximize $\text{tr}\ V'U_\perp'XA$ over $V$ satisfying $V'V=I$. The optimum $V$ is the projection of $U_\perp'XA$
-on the set of orthonormal $(n-m)\times q$ matrices. We use the symbol $\leftarrow$
-for updates in iterations. Thus $Z\leftarrow f(Z)$ means "the new $Z$ becomes 
-function $f$ of the previous $Z$", which is the same thing as $Z^{(k+1)}=f(Z^{(k)})$,
-but without the ugly superscripts. We have
-\begin{subequations}
-\begin{equation}
-F\leftarrow U_\perp V=U_\perp^{\ } U_\perp'XA
-(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}.
-\end{equation}
-In the same way the optimum $U$ for given $(F,A,D)$ is
-\begin{equation}
-U\leftarrow F_\perp^{\ } F_\perp'XD
-(DX'F_\perp^{\ } F_\perp'XD)^{-1/2}.
-\end{equation}
-\end{subequations}
-In each ALS cycle we update in the order $(F,A,U,D)$. Using $\leftarrow$ for the
-update, we have
-\begin{equation}
-A\leftarrow\Pi_A(X'F)=\Pi_A(X'U_\perp^{\ } U_\perp'XA
-(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2})
-\end{equation}
-Now use
-$U_\perp^{\ } U_\perp'=I-UU'$ and define $\tilde D:=X'U$,
-so that $D=\text{diag}(\tilde D)$. Then ... becomes
-\begin{subequations}
-\begin{equation}
-A\leftarrow \Pi_A\left\{(C-\tilde D\tilde D')A[A'(C-\tilde D\tilde D')A]^{-1/2}\right\}
-\end{equation}
-In the same way, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $\tilde A:=X'F$, gives the update
-\begin{equation}
-D\leftarrow\Pi_D(X'U)=\Pi_D\left\{(C-\tilde A\tilde A')D
-[D(C-\tilde A\tilde A')D]^{-1/2}\right\}
-\end{equation}
-\end{subequations}
-
-\sectionbreak
 
 
 ## Algorithm G
@@ -538,11 +487,11 @@ With this formula for the gradient many general purpose optimization methods for
 ... (code in the appendix) uses the BFGS method of the optim() function from the stats package (@r_core_team_25). 
 
 
-```{r}
-hemm <- mdfaAlgorithmG(emmett, aemm, temm)
-print(hemm)
-hmax <- mdfaAlgorithmG(maxwell, memm, uemm)
-print(hmax)
+```{r algg, eval = FALSE}
+#hemm <- mdfaAlgorithmG(emmett, aemm, temm)
+#print(hemm)
+#hmax <- mdfaAlgorithmG(maxwell, memm, uemm)
+#print(hmax)
 ```
 
 
@@ -634,12 +583,12 @@ The Emmett example is somewhat atypical, because the CFA model with three factor
 MDFA and ML solutions are nearly identical.
 
 ```{r}
-hemm <- mdfaAlgorithmG(emmett, aemm, temm)
+#hemm <- mdfaAlgorithmG(emmett, aemm, temm)
 ```
 
 The same solution is reached using Algorithm G.
 It requires 29 function evaluations and 27 gradient evaluations to arrive 
-at `r hemm$loss`.
+at
 
 
 ## Maxwell
@@ -708,8 +657,50 @@ abline(0, 1)
 
 ## Cattell
 
+This example uses the correlation matris between 12 cognitive variables from @cattell_63,
+included in the psych package (@revelle_25), to illustrate fitting a group factor model.
+The variables 1 and 2 are verbal ability, 3 and 4 are spatial ability, 5 and 6 are reasoning, 7 and 8 are numerical ability. The first eight are from the Thurstone {Primary Abilities test, and the last four are from the (IPAT) Culture Fair Intelligence Test.
+We apply Algorithm B with 6 factors: one general factor and five group factors. 
+
+```{r cattell, echo = FALSE}
+source("cattell.R")
+h <- mdfaAlgorithmB(cattell, ctmat, cattellProjection, itmax = 1000, verbose = FALSE)
+g <- mdfaConvertTtoAD(h$tmat, rotate = FALSE)
+```
+Algorithm B uses `r h$itel` iterations to converge to loss `r h$loss`. The loadings
+are
+```{r cattella, echo = FALSE}
+matrixPrint(g$loadings)
+```
+and the uniquesnesses are
+```{r cattelld, echo = FALSE}
+matrixPrint(g$uniquenesses)
+```
+@rindskopf_rose_88 also do a group factor analysis, but they allow for correlations
+between the five group factors. This makes their results not directly comparable to 
+ours.
+
+
 
 ## BFI
+
+In this example we use the BFI data from the psych package (@revelle_25). There are 2800
+subjects and 25 personality self report items. We use the impute() function from the
+e1071 package, with the mean option, to fill in the missing data (@meyer_dimitriadou_hornik_weingessel_leisch_24). In this example we can use
+mdfaAlgorithmA(), because the complete data matrix is available.
+```{r bfi, echo = FALSE, cache = TRUE}
+ha <- mdfaAlgorithmA(bfi, told, verbose = FALSE)
+hb <- mdfaAlgorithmB(cfi, told, verbose = FALSE)
+```
+Algorithms A and B both require `r ha$itel` iterations to arrive at the same solution with loss `r ha$loss`.
+
+```{r bfibench, echo = FALSE, cache = TRUE}
+suppressWarnings(h <- microbenchmark(mdfaAlgorithmA(bfi, told, verbose = FALSE), mdfaAlgorithmB(cfi, told, verbose = FALSE)))
+```
+The median execution time, as measured by the microbenchmark packages (@mersmann_24), is 435.936128 milliseconds for Algorithm A and 5.39906 milliseconds for Algorithm B, which is consequently about 80 times faster. The 100 benchmark runs are plotted below.
+```{r bfibenchplot, echo = FALSE, fig.align = "center", fig.cap = "Comparison Algorithms A and B"}
+autoplot(h)
+```
 
 
 \sectionbreak

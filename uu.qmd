@@ -1,0 +1,23 @@
+---
+title: "uu"
+format: html
+---
+
+Given an $n\times m$ matrix $X$ and an $n\times q$ matrix $F$ with $F'F=I$.
+Find $n\times m$ matrix $U$ such that $\text{tr}\ U'XD$ is maximal over
+$U'U=I$, $U'F=0$ and $U'X$ is diagonal.
+
+
+First $U'F=0$ means $U=F_\perp V$, where $F_perp$ is $n\times(n-q)$ and $V$ is
+$(n-q)\times m$. Thus we must maximize $\text{tr}\ V'F_\perp'XD$ over $V'V=I$ and
+$V'F_\perp'X$ is diagonal. Matrix $F_\perp'X$ is $(n-q)\times m$.
+Suppose $F_\perp'X=KA+K_\perp B$ using orthonormal bases for the column space and null space.
+Write $V=KP+K_\perp Q$. Then $V'F_\perp'X=P'A+Q'B$ and thus we must maximize
+$\text{tr}\ (P'A+Q'B)D$ over $P'P+Q'Q=I$ and 
+
+$V'F_\perp X=\Omega$ and $V'V=I$.
+$$V=F_\perp' X(X'F_\perp F_\perp' X)^{-1}\Omega+HT$$
+$$V'V=\Omega(X'F_\perp'F_\perp X)^{-1}\Omega+T'T=I$$
+maximize $\text{tr}\ \Omega D$ over $\Omega(X'F_\perp'F_\perp X)^{-1}\Omega\lesssim I$. which is
+$(X'F_\perp'F_\perp X)^{-1}\lesssim\Omega^{-2}$ or $\Omega^2\lesssim C-AA'$
+

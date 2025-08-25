@@ -22,13 +22,15 @@ matrixPower <- function(x, p = 1 / 2) {
   return(evec %*% diag(epow) %*% t(evec))
 }
 
-mdfaConvertTtoAD <- function(tmat) {
+mdfaConvertTtoAD <- function(tmat, rotate = TRUE) {
   q <- ncol(tmat) - nrow(tmat)
   loadings <- tmat[, 1:q]
-  uniquenesses <- diag(tmat[, -(1:q)]) ^ 2
-  mat <- crossprod(loadings, diag(1 / uniquenesses) %*% loadings)
-  mvc <- eigen(mat)$vectors
-  loadings <- loadings %*% mvc
+  uniquenesses <- diag(tmat[, -(1:q)])^2
+  if (rotate) {
+    mat <- crossprod(loadings, diag(1 / uniquenesses) %*% loadings)
+    mvc <- eigen(mat)$vectors
+    loadings <- loadings %*% mvc
+  }
   return(list(loadings = loadings, uniquenesses = uniquenesses))
 }
 
