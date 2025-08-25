@@ -18,5 +18,4 @@ meig <- eigen(maxwell)
 mvec <- meig$vectors[, 1:4]
 mval <- diag(sqrt(meig$values[1:4]))
 mcom <- mvec %*% mval
-memm <- cbind(mcom, diag(sqrt(1 - rowSums(mcom^2))))
-uemm <- cbind(matrix(1, 10, 4), diag(10))
+matold <- cbind(mcom, diag(sqrt(1 - rowSums(mcom^2))))

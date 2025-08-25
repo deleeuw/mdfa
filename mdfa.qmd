@@ -247,12 +247,12 @@ The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT
 
 There are several factor analytic decomposition techniques that use least squares loss functions\footnote{We use SSQ() for the unweighted sum of squares of a matrix or vector.}. The oldest and most obvious one is
 \begin{equation}
-\sigma(T)=\text{SSQ}(C-TT'),\label{eq-minres}
+\sigma(T)=\frac12\text{SSQ}(C-TT'),\label{eq-minres}
 \end{equation}
 where $\text{SSQ}()$ stands for the unweighted sum of squares.
 For CFA \eqref{eq-minres} becomes
 \begin{equation}
-\sigma(T)=\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
+\sigma(T)=\frac12\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
 \end{equation}
 An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function \eqref{eq-minrescfa} over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course this only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa}
 are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_69 and @joreskog_vanthillo_71.
@@ -260,7 +260,7 @@ are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_6
 Also for CFA @young_40 and @whittle_52 propose minimizing the weighted least 
 squares loss function
 \begin{equation}
-\sigma(A, D, F)=\text{tr}\ (X-FA')D^{-2}(X-FA')',\label{eq-young-whittle}
+\sigma(A, D, F)=\frac12\text{tr}\ (X-FA')D^{-2}(X-FA')',\label{eq-young-whittle}
 \end{equation}
 which has the disadvantage that it assumes $D$ is known, or at least that there is a reasonable prior estimate of $D$. Minimizing \eqref{eq-young-whittle} has the advantage that the problem becomes a form of principal component analysis (PCA), in which the solution can be computed with a single SVD.
 
@@ -278,7 +278,7 @@ But \eqref{eq-lawley41} is the negative likelihood loss function for the fixed f
 The file lsfa.R in the repository has a function lsfa() for MINRES factor analysis. It
 needs an initial estimate of $D$, for which we can take $\text{diag}^{-1}(C^{-1})$.
 Then it applies a small number of Thomson iterations before switching to Newton
-iterations. First and second derivatives are taken from @deleeuw_E_25d. Eigenvalue/eigenvectors calculations use the RSpectra package (@qiu_mei_24).
+iterations. First and second derivatives are taken from @deleeuw_E_25d. Eigenvalue/eigenvector calculations use the RSpectra package (@qiu_mei_24).
 
 ## MDFA
 
@@ -286,7 +286,7 @@ A more direct way of fitting the full CFA model was discussed (independently and
 
 In MDFA the least squares loss function is
 \begin{equation}
-\sigma(Y,A):=\text{SSQ}(X-YT'),\label{eq-lossdef}
+\sigma(Y,A):=\frac12\text{SSQ}(X-YT'),\label{eq-lossdef}
 \end{equation}
 which must be minimized over $Y'Y=I$ and $T\in\mathcal{T}$.
 MDFA was not immediately accepted as an alternative factor analysis technique. It made its first journal appearance in a series of papers by Unkel and Trendafilov, based largely on Unkel's dissertation (@unkel_09). Over the years they contributed a "robust"
@@ -308,7 +308,7 @@ Finding the optimum $T$ for given $Y$ is  straightforward.
 We complete the square, as in
 \begin{equation}
 \sigma(Y,T)=
-\text{tr}\ C+\text{tr} (T-X'Y)'(T-X'Y)-\text{tr}\ Y'CY.
+\frac12\text{tr}\ C+\frac12\text{tr} (T-X'Y)'(T-X'Y)-\frac12\text{tr}\ Y'CY.
 \end{equation}
 Thus the optimum $T$ for given $Y$ is obtained by projecting 
 $X'Y$ on the set of matrices $\mathcal{T}$. 
@@ -321,7 +321,7 @@ For confirmatory MDFA in which we require some loadings to be equal to each othe
 
 Also
 \begin{equation}
-\sigma(T,Y)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ Y'XT.\label{eq-sigmay}
+\sigma(T,Y)=\frac12\text{tr}\ C+\frac12\text{tr}\ T'T-\text{tr}\ Y'XT.\label{eq-sigmay}
 \end{equation}
 We have to maximize $\text{tr}\ Y'XT$ over all
 $n\times p$ orthonormal $Y$.
@@ -402,13 +402,50 @@ are some simple rank conditions which imply that the indeterminate part does not
 role in Algorithm A, which uses $X'Y$ to update $T$,  and in the fitted values, which uses $YT'$.
 
 ::: {#cor-unique}
-If $\text{rank}(T)=m$ and $Y$ is given by \eqref{eq-yoptt} then $X'Y=X'KL'=CT(T'CT)^{-1/2}$. If $\text{rank}(X)=m$ then $YT'=KL'T'=XT(T'CT)^{-1/2}T'$.
+
+If $XT$ has rank $m$ and $Y$ is given by \eqref{eq-yoptt} then
+
+1. $X'Y=X'KL'=CT(T'CT)^{-1/2}$. 
+
+2. $YT'=KL'T'=XT(T'CT)^{-1/2}T'$.
+
+3. $T'X'Y=(T'CT)^{1/2}$.
 :::
 ::: {.proof}
-We know that $K_\perp'XT=0$. If $\text{rank}(T)=m$ this implies $X'K_\perp=0$.
-If $\text{rank}(X)=m$ then $XTL_\perp=0$ implies $L_\perp'T=0$. In both cases
-the indeterminate part of $Y$ contributes zero.
+If $XT$ is of rank $m$ then both $X$ and $T$ are of rank $m$.
+We know that $K_\perp'XT=0$. Because $\text{rank}(T)=m$ this implies $X'K_\perp=0$.
+This proves part one.
+
+Because $\text{rank}(X)=m$ and $XTL_\perp=0$ we have $L_\perp'T=0$. This proves part 
+two. 
+
+Part three follows directly from part one. 
 :::
+
+
+The CFA equations \eqref{eq-cfa1}-\eqref{eq-cfa6} imply that $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim C$. The second one in turn implies that $0\lesssim D^2\lesssim\text{diag}(C)$. In most CFA techniques it is possible that the estimated
+uniquenesses do not satisfy these inequality constraints
+and are consequently "improper" solutions. This is true for both MINRES and ML. We
+show that it is "less true" for MDFA.
+
+::: {#thm-bounds}
+In the exploratory MDFA solution $0\lesssim AA'\lesssim C$ and 
+$0\lesssim D^2\lesssim\text{diag}(C)$.
+:::
+::: {.proof}
+At the solution we have $A=X'F$ and thus $AA'=X'FF'X$.
+Because $FF'\lesssim I$ we have $AA'\lesssim C$. At the
+solution we also have $D=\text{diag}(X'U)$, or
+$d_j=x_j'u_j$. Since $u_j'u_j=1$  we have from Cauchy-Schwartz 
+$d_j^2\leq x_j'x_j=c_{jj}$.
+:::
+
+@thm-bounds shows that worst-case improper solutions 
+do not happen in MDFA. Uniquenesses are always non-negative
+and bounded above by the diagonal of $C$, i.e. for correlation 
+matrices they are always between zero and one.
+Note however that we have not shown that $D^2\lesssim C$,
+so not all improper solutions are excluded.
 
 The repository has a file mdfaAlgorithmA.R, with the function mdfaAlgorithmA() implementing
 Algorithm A. There is a function mdfaProject() which take care of the least squares projections on $\mathcal{T}$. By default mdfaProject() replaces the matrix with the last $m$ columns of $T$ by its diagonal, but replacing the default projection routine allows us to incorporate any set of constraints. 
@@ -416,6 +453,8 @@ Algorithm A. There is a function mdfaProject() which take care of the least squa
 We emphasize that mdfaAlgorithmA() updates $Y$
 using the determinate part $KL'$ only, which means that in our iterations we do not have $Y'Y=I$. @cor-unique show that this does not impact the sequences of loss function values and of iterates for $T$, but it does mean that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate part, but it remains true that this does not solve the original MDFA problem, which requires $Y'Y=I$. Also computing a proper $Y$ corresponding with the optimal $T$
 forces us to make a choice of $S$ in \eqref{eq-yoptt}.
+
+
 
 
 ## Algorithm B
@@ -466,33 +505,118 @@ We have $K_\perp'XT=0$. If $T$ has rank $m$ then this implies
 $X'K_\perp=0$ which leads to the result in the theorem.
 :::
 
-Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which 
-means finding the $m$ largest eigenvalues and their corresponding eigenvectors. The update is then projected on the set $\mathcal{T}$ defined by the template. The ALS interpretation of the
+Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which means finding the $m$ largest eigenvalues and their corresponding eigenvectors. The update is then projected on the set $\mathcal{T}$ defined by the template. The ALS interpretation of the
 algorithm shows directly that a decreasing sequence of loss function values is produced, which
 proves convergence of $T$ under the usual identification and rank conditions.
 
+In Algorithm A we only compute the determinate part of $Y$, in Algorithm B there is no $Y$
+at all. In both cases finding appropiate (indeterminate) factor scores requires additional work, not unlike what must be done in the MINRES or ML techniques for CFA. 
+
+## Algorithm C
+
+In @deleeuw_C_04a an alternative ALS algorithm for CFA
+is mentioned and briefly described. It minimizes the CFA loss
+\begin{equation}
+\sigma(F,A,U,D)=\frac12\text{SSQ}(X-FA'-UD),\label{eq-cfaloss}
+\end{equation}
+with the constraints $F'F=I$, $U'F=0$, $U'U=I$, $A\in\mathcal{A}$, and $D\in\mathcal{D}$.
+Write $\Pi_A()$ and $\Pi_D()$ for the least squares projectors on $\mathcal{A}$ and
+$\mathcal{D}$. 
+
+In Algorithm A we use a two-block ALS strategy. We alternate the update of $Y=(F\mid U)$ for given $T=(A\mid D)$ and of $T=(A\mid D)$ for given $Y=(F\mid U)$. In Algorithm $C$ we use
+a four-block ALS strategy. The four steps in an ALS
+iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for given $(F,A,D)$,  $A$ for given $(F, U, D)$, and $D$ for given $(A,F,U)$. The third and fourth step are the same as in Algorithm A, the first two steps are different.
+
+Start the ALS cycle with minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying $F'F=I$ and $F'U=0$. Now $F'U=0$ if and only if $F=U_\perp V$,
+where $U_\perp$ is an $n\times(n-m)$ orthonormal basis for the complement of $U$ and $V$ is any $(n-m)\times q$ matrix. Thus we must maximize $\text{tr}\ V'U_\perp'XA$ over $V$ satisfying $V'V=I$. The optimum $V$ is the projection of $U_\perp'XA$
+on the set of orthonormal $(n-m)\times q$ matrices. We use the symbol $\leftarrow$
+for updates in iterations. Thus $Z\leftarrow f(Z)$ means "the new $Z$ becomes 
+function $f$ of the previous $Z$", which is the same thing as $Z^{(k+1)}=f(Z^{(k)})$,
+but without the reference to a specific iteration. We have
+\begin{subequations}
+\begin{equation}
+F\leftarrow U_\perp V=U_\perp^{\ } U_\perp'XA
+(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}.\label{eq-fupdate}
+\end{equation}
+In the same way the optimum $U$ for given $(F,A,D)$ is
+\begin{equation}
+U\leftarrow F_\perp^{\ } F_\perp'XD
+(DX'F_\perp^{\ } F_\perp'XD)^{-1/2}.\label{eq-uupdate}
+\end{equation}
+\end{subequations}
+In each ALS cycle we update in the order $(F,A,U,D)$. Thus
+\begin{equation}
+A\leftarrow\Pi_A(X'F)=\Pi_A(X'U_\perp^{\ } U_\perp'XA
+(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}).\label{eq-aupdate}
+\end{equation}
+Now use
+$U_\perp^{\ } U_\perp'=I-UU'$ and define $\tilde D:=X'U$,
+so that $D=\Pi_D(\tilde D)$. Then \eqref{eq-aupdate} becomes
+\begin{subequations}
+\begin{equation}
+A\leftarrow \Pi_A\left\{(C-\tilde D\tilde D')A[A'(C-\tilde D\tilde D')A]^{-1/2}\right\}.\label{eq-aupdate2}
+\end{equation}
+In the same way, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $\tilde A:=X'F$, gives the update
+\begin{equation}
+D\leftarrow\Pi_D(X'U)=\Pi_D\left\{(C-\tilde A\tilde A')D
+[D(C-\tilde A\tilde A')D]^{-1/2}\right\}.\label{eq-dupdate}
+\end{equation}
+\end{subequations}
+
+Although \eqref{eq-aupdate2} and \eqref{eq-dupdate} show we can iterate in Algorithm C without having to compute
+$F_\perp$ and $U_\perp$ we still need $X$ to compute $\tilde A$ and $\tilde D$. Thus simplifications as in Algorithm B do not seem possible. This makes it unlikely that
+Algorithm C will actually be useful for CFA computations. 
+
+The CFA definition \eqref{eq-cfa1}-\eqref{eq-cfa6} implies $A=X'F$ and 
+$D=X'U$. In an exploratory MDFA solution we do have
+$A=X'F$ but $D=\text{diag}(X'U)$. As a consequence
+unique factor $u_i$ in the solution can be correlated
+with variables $x_j$, where $j\neq i$. This violates 
+the very idea of unique factors. We may conclude that a non-diagonal $X'U$
+indicates a lack of CFA fit. 
+We may also find it sufficiently counter-intuitive and prevent 
+it from happening.
+
+In the thesis of Socan an ALS variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the case of perfect fit the constraint $U'X=D$ is automatically satisfied, but it will not be so for the least squares fit. 
+
+In the version of Algorithm C in which we also require that $U'X=\Omega$, with $\Omega$
+a diagonal matrix with additional unknowns, we can update $A$, $D$, and $F$ as before.
+But for $U$ and $\Omega$ we have to solve maximizing $\text{tr}\ U'XD$ over $U$ and $\Omega$
+such that $U'F=0$, $U'U=I$, and $U'X=\Omega$. We satisfy $U'F=0$ and $U'U=I$ by
+choosing $U=F_\perp V$ with $V'V=I$. It remains to maximize $\text{tr}\ V'F_\perp'XD$
+over $V$ with $V'F_\perp'X=\Omega$ and $V'V=I$. 
+
+Assume $F_\perp'X$ has rank $m$. Then the general solution of $V'F_\perp'X=\Omega$
+is
+$$
+V=F_\perp' X(X'F_\perp F_\perp' X)^{-1}\Omega+HM.
+$$
+with $H$ a basis for the null space of $F_\perp'X$ and with $M$ arbitrary. For this $V$
+we must have
+$$
+V'V=\Omega(X'F_\perp F_\perp' X)^{-1}\Omega+M'M=I
+$$
+which is solvable if and only if $\Omega$ satisfies $\Omega(X'F_\perp F_\perp' X)^{-1}\Omega\lesssim I$, or, $\Omega^2\lesssim C-\tilde A\tilde A'$. Thus 
+our problem becomes maximizing $\text{tr}\ \Omega D$ under these constraints.
+This problem, although convex, is not a simple least squares projection
+problem, and we currently have no implementation.
 
 ## Algorithm G
 
-
-$$
-\sigma_\star(T)=\text{tr}\ X'X+\text{tr}\ T'T-2\|XT\|_\star=\text{tr}\ X'X+\text{tr}\ T'T-2\sum_{\nu=1}^m\lambda_\nu^\frac12(T'CT)
-$$
-
+The minimum of $\sigma(Y,T)$ over $Y'Y=I$ is
+\begin{equation}
+\sigma_\star(T):=\frac12\text{tr}\ X'X+\frac12\text{tr}\ T'T-\|XT\|_\star=\frac12\text{tr}\ X'X+\frac12\text{tr}\ T'T-\sum_{\nu=1}^m\lambda_\nu^\frac12(T'CT).\label{eq-projloss}
+\end{equation}
 First and second derivatives of the trace norm with respect to $T$ were computed in @deleeuw_E_25d. The gradient is
-$$
-\mathcal{D}\sigma_\star(T)=T-CT(T'CT)^{-1/2}
-$$
-With this formula for the gradient many general purpose optimization methods for minimizing projected loss function ... become available. The R function
-... (code in the appendix) uses the BFGS method of the optim() function from the stats package (@r_core_team_25). 
+\begin{equation}
+\mathcal{D}\sigma_\star(T)=T-CT(T'CT)^{-1/2}.\label{eq-projgrad}
+\end{equation}
+With this formula for the gradient many general purpose optimization methods for minimizing the projected loss function \eqref{eq-projloss} become available. The R function
+mdfaAlgorithmG() in the repository uses the BFGS method of the optim() function from the stats package (@r_core_team_25). 
 
-
-```{r algg, eval = FALSE}
-#hemm <- mdfaAlgorithmG(emmett, aemm, temm)
-#print(hemm)
-#hmax <- mdfaAlgorithmG(maxwell, memm, uemm)
-#print(hmax)
-```
+Compared with Algorithm B we can perhaps expect some gain in efficiency, because of the
+superlinear convergence of the BFGS method, but we lose some flexibility by not having
+the projections $\Pi_T()$ available.
 
 
 ## Algorithm H
@@ -532,7 +656,9 @@ matrixPrint(emmett, digits = 3, width = 5, flag = "")
 ```
 
 ```{r alga, echo = FALSE, cache = TRUE}
-h <- mdfaAlgorithmB(emmett, aemm, temm, itmax = 1000, verbose = FALSE)
+source("emmett.R")
+h <- mdfaAlgorithmB(emmett, emtold, itmax = 1000, verbose = FALSE)
+g <- mdfaConvertTtoAD(h$tmat)
 ```
 
 As the initial estimate for $A$ we use the first three
@@ -541,7 +667,7 @@ by a loss-decrease in successive iterations of less than
 `r 1e-10`. The MDFA uniquenesses are
 
 ```{r alga_d, echo = FALSE}
-matrixPrint(h$uniquenesses, digits = 3, width = 5, flag ="")
+matrixPrint(g$uniquenesses, digits = 3, width = 5, flag ="")
 ```
 The uniquenesses from the ML solution in Lawley and Maxwell's Table 4.2 are
 ```{r ml_d, echo = FALSE}
@@ -553,7 +679,7 @@ is rotated so that $A'D^{-2}A$ is diagonal, so we rotate the
 MDFA solution in the same way. The MDFA loadings are
 
 ```{r alga_a, echo = FALSE}
-matrixPrint(-h$loadings, digits = 3, width = 5)
+matrixPrint(-g$loadings, digits = 3, width = 5)
 ```
 
 The ML loadings are
@@ -566,29 +692,20 @@ ml_a <- matrix(c(
 matrixPrint(ml_a, digits = 3, width = 5)
 ```
 
-```{r mdfa_plot, echo = FALSE, fig.align = "center", fig.width = 6, fig.height = 6}
-par(pty="s")
-mdfa <- tcrossprod(h$loadings) + diag(h$uniquenesses)
-plot(emmett, mdfa, col = "RED")
-abline(0, 1)
-```
+The Emmett example is somewhat atypical, because the CFA model with three factors has a near perfect fit. This explains why the MDFA and ML solutions are nearly identical.
 
-```{r ml_plot, echo = FALSE, fig.align = "center", fig.width = 6, fig.height = 6}
-par(pty="s")
-ml <- tcrossprod(ml_a) + diag(mld)
-plot(emmett, ml, col = "RED")
-abline(0, 1)
-```
-The Emmett example is somewhat atypical, because the CFA model with three factors has a near perfect fit. This explains why the
-MDFA and ML solutions are nearly identical.
+The AlgorithmB solution computed by Algorithm G requires 29 function evaluations and 27 gradient evaluations.
+
 
 ```{r}
-#hemm <- mdfaAlgorithmG(emmett, aemm, temm)
+source("emmett.R")
+suppressWarnings(h <- microbenchmark(
+  mdfaAlgorithmB(emmett, emtold, itmax = 1000, verbose = FALSE),
+  factanal(NULL, factors = 3, covmat = emmett)
+))
 ```
 
-The same solution is reached using Algorithm G.
-It requires 29 function evaluations and 27 gradient evaluations to arrive 
-at
+
 
 
 ## Maxwell
@@ -602,14 +719,15 @@ matrixPrint(maxwell, digits = 3, width = 5, flag = "")
 ```
 
 ```{r maxalgb, echo = FALSE, cache = TRUE}
-h <- mdfaAlgorithmB(maxwell, memm, uemm, itmax = 10000, verbose = FALSE)
+h <- mdfaAlgorithmB(maxwell, matold, itmax = 10000, verbose = FALSE)
+g <- mdfaConvertTtoAD(h$tmat)
 ```
 
 Algorithm B converges in `r h$itel`
 iterations to a loss of `r h$loss`. The MDFA uniquenesses are
 
 ```{r maxalgb_d, echo = FALSE}
-matrixPrint(h$uniquenesses, digits = 3, width = 5, flag ="")
+matrixPrint(g$uniquenesses, digits = 3, width = 5, flag ="")
 ```
 The uniquenesses from the ML solution in Lawley and Maxwell's Table 4.6 are
 ```{r maxml_d, echo = FALSE}
@@ -627,7 +745,7 @@ results without any manual intervention. The only consequence of the Heywood cas
 The MDFA loadings are, after suitable rotation,
 
 ```{r maxalgb_a, echo = FALSE}
-matrixPrint(-h$loadings, digits = 3, width = 5)
+matrixPrint(g$loadings, digits = 3, width = 5)
 ```
 
 The ML loadings are
@@ -641,20 +759,6 @@ maxml_a <- matrix(c(
 matrixPrint(maxml_a, digits = 3, width = 5)
 ```
 
-```{r maxmdfa_plot, echo = FALSE, fig.align = "center", fig.width = 6, fig.height = 6}
-par(pty="s")
-mdfa <- tcrossprod(h$loadings) + diag(h$uniquenesses)
-plot(maxwell, mdfa, col = "RED")
-abline(0, 1)
-```
-
-```{r maxml_plot, echo = FALSE, fig.align = "center", fig.width = 6, fig.height = 6}
-par(pty="s")
-ml <- tcrossprod(maxml_a) + diag(maxmld)
-plot(maxwell, ml, col = "RED")
-abline(0, 1)
-```
-
 ## Cattell
 
 This example uses the correlation matris between 12 cognitive variables from @cattell_63,
@@ -664,7 +768,7 @@ We apply Algorithm B with 6 factors: one general factor and five group factors.
 
 ```{r cattell, echo = FALSE}
 source("cattell.R")
-h <- mdfaAlgorithmB(cattell, ctmat, cattellProjection, itmax = 1000, verbose = FALSE)
+h <- mdfaAlgorithmB(cattell, catold, cattellProjection, itmax = 1000, verbose = FALSE)
 g <- mdfaConvertTtoAD(h$tmat, rotate = FALSE)
 ```
 Algorithm B uses `r h$itel` iterations to converge to loss `r h$loss`. The loadings
@@ -689,8 +793,8 @@ subjects and 25 personality self report items. We use the impute() function from
 e1071 package, with the mean option, to fill in the missing data (@meyer_dimitriadou_hornik_weingessel_leisch_24). In this example we can use
 mdfaAlgorithmA(), because the complete data matrix is available.
 ```{r bfi, echo = FALSE, cache = TRUE}
-ha <- mdfaAlgorithmA(bfi, told, verbose = FALSE)
-hb <- mdfaAlgorithmB(cfi, told, verbose = FALSE)
+ha <- mdfaAlgorithmA(bfi, bftold, verbose = FALSE)
+hb <- mdfaAlgorithmB(cfi, bftold, verbose = FALSE)
 ```
 Algorithms A and B both require `r ha$itel` iterations to arrive at the same solution with loss `r ha$loss`.
 
@@ -707,51 +811,10 @@ autoplot(h)
 
 # Discussion
 
-## Additional Constraints
 
-The CFA definition ...-... implies $A=X'F$ and 
-$D=X'U$. In an exploratory MDFA solution we do have
-$A=X'F$ but $D=\text{diag}(X'U)$. As a consequence
-unique factor $i$ in the solution can be correlated
-with variables $j$, where $j\neq i$. This is contrary
-the very idea of unique factors. If $X'U$ is not
-diagonal then this indicates a lack of CFA fit. 
-It may also be sufficiently counter-intuitive to prevent 
-it from happening.
-
-In the thesis of Socan ab ALS variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. In the version of MDFA in @stegeman_16, which they call the *Data Factor Model*,
-it is even required that $U'X=D$. In the case of perfect fit the constraint $U'X=D$ is automatically
-satisfied, but it will not be so for the least squares fit. These additional constraints
-on MDFA complicate the ALS algorithm and take us in the direction of alternative methods for 
-computing factor scores. We do not impose those constraints in this paper.
 
 ## Correlated Factors and Errors
 
-## Heywood Cases
-
-The CFA equations $C=AA'+D^2$ imply that $0\lesssim D^2\lesssim C$ and $0\lesssim AA'\lesssim C$. This in turn implies that $D^2\lesssim\text{diag}(C)$.
-For many CFA techniques it is possible that the estimated
-uniqueness do not satisfy these inequality constraints
-and are consequently "improper" or Heywood cases.
-
-::: {#thm-bounds}
-In the MDFA solution $0\lesssim AA'\lesssim C$ and 
-$0\lesssim D^2\lesssim\text{diag}(C)$.
-:::
-::: {.proof}
-At the solution we have $A=X'F$ and thus $AA'=X'FF'X$.
-Because $FF'\lesssim I$ we have $AA'\lesssim C$. At the
-solution we also have $D=\text{diag}(X'U)$, or
-$d_j=x_j'u_j$. Since $u_j'u)j=1$  by Cauchy-Schwartz 
-$d_j^2\leq x_j'x_j=c_{jj}$.
-:::
-
-@thm-bounds shows that worst-case Heywood cases 
-do not happen in MDFA. Uniquenesses are always non-negative
-and bounded above by the diagonal of $C$, i.e. for correlation 
-matrices they are always between zero and one.
-Note however that we have not shown that $D^2\lesssim C$,
-so not all improper solutions are excluded.
 
 ## Scale Freeness
 
@@ -831,9 +894,6 @@ Note that $\mathcal{D}_1\sigma(A,C)=0$ if $C=AA'$.
 
 
 \sectionbreak
-
-
-# Code
 
 
 # References

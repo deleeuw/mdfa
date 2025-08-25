@@ -1,45 +1,38 @@
 
-mdfaAlgorithmG <- function(c, a, t) {
-  nrow <- nrow(a)
-  ncol <- ncol(a)
-  ncom <- ncol - nrow
+mdfaAlgorithmG <- function(cmat, told) {
+  m <- nrow(told)
+  p <- ncol(told)
+  q <- p - m
   h <- optim(
-    par = as.vector(a),
+    par = as.vector(told),
     fn = theFunc,
     gr = theGrad,
     method = "BFGS",
     control = list(trace = 6),
     cp = c,
-    tp = t,
     nrow = nrow,
     ncol = ncol
   )
-  hmat <- matrix(h$par, nrow, ncol)
-  loadings <- hmat[, 1:ncom]
-  uniquenesses <- diag(hmat[, -(1:ncom)]^2)
-  mat <- crossprod(loadings, diag(1 / uniquenesses) %*% loadings)
-  mvc <- eigen(mat)$vectors
-  loadings <- loadings %*% mvc
+  tmat <- matrix(h$par, m, p)
   return(
     list(
-      loadings = loadings,
-      uniquenesses = uniquenesses,
+      tmat = tmat,
       loss = h$value,
       counts = h$counts
     )
   )
 }
 
-theFunc <- function(a, cp, tp, nrow, ncol) {
-  tcp <- sum(diag(cp))
-  tap <- sum(a^2)
-  amt <- matrix(a, nrow, ncol)
-  aca <- crossprod(amt, cp %*% amt)
+theFunc <- function(told, cmat, nrow, ncol) {
+  tcp <- sum(diag(cmat))
+  tap <- sum(told^2)
+  amt <- matrix(told, nrow, ncol)
+  aca <- crossprod(amt, cmat %*% amt)
   func <- tcp + tap - 2 * sum(sqrt(svd(aca)$d[1:nrow]))
   return(func)
 }
 
-theGrad <- function(a, cp, tp, nrow, ncol) {
+theGrad <- function(a, cp, nrow, ncol) {
   amt <- matrix(a, nrow, ncol)
   aca <- crossprod(amt, cp %*% amt)
   eca <- eigen(aca)

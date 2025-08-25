@@ -14,5 +14,4 @@ aeig <- eigen(emmett)
 avec <- aeig$vectors[, 1:3]
 aval <- diag(sqrt(aeig$values[1:3]))
 acom <- avec %*% aval
-aemm <- cbind(acom, diag(sqrt(1 - rowSums(acom^2))))
-temm <- cbind(matrix(1, 9, 3), diag(9))
+emtold <- cbind(acom, diag(sqrt(1 - rowSums(acom^2))))

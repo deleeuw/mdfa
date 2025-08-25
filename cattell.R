@@ -14,6 +14,6 @@ aeig <- eigen(cattell)
 avec <- aeig$vectors[, 1:6]
 aval <- diag(sqrt(aeig$values[1:6]))
 acom <- avec %*% aval
-aemm <- cbind(acom, diag(sqrt(1 - rowSums(acom^2))))
-ctmat <- cattellProjection(aemm)
+catold <- cbind(acom, diag(sqrt(1 - rowSums(acom^2))))
+ctmat <- cattellProjection(catold)
 
