@@ -47,12 +47,16 @@ suppressPackageStartupMessages(library(tinytex, quietly = TRUE))
 suppressPackageStartupMessages(library(microbenchmark, quietly = TRUE))
 suppressPackageStartupMessages(library(ggplot2, quietly = TRUE))
 source("mdfaAuxiliary.R")
+source("mdfaProjections.R")
 source("mdfaAlgorithmA.R")
 source("mdfaAlgorithmB.R")
 source("mdfaAlgorithmG.R")
+source("lsfa.R")
 source("emmett.R")
 source("maxwell.R")
 source("cattell.R")
+source("macdonell.R")
+source("tucker.R")
 source("bfi.R")
 ```
 
@@ -243,13 +247,14 @@ The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT
 
 # Least Squares Factor Analysis
 
-## MINRES
+## ULS
 
 There are several factor analytic decomposition techniques that use least squares loss functions\footnote{We use SSQ() for the unweighted sum of squares of a matrix or vector.}. The oldest and most obvious one is
 \begin{equation}
 \sigma(T)=\frac12\text{SSQ}(C-TT'),\label{eq-minres}
 \end{equation}
-where $\text{SSQ}()$ stands for the unweighted sum of squares.
+where $\text{SSQ}()$ stands for the unweighted sum of squares. Minimizing \eeref{eq-minres)\} is the Unweighted Least Squares or ULS method of factor analysis.
+
 For CFA \eqref{eq-minres} becomes
 \begin{equation}
 \sigma(T)=\frac12\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
@@ -311,19 +316,20 @@ We complete the square, as in
 \frac12\text{tr}\ C+\frac12\text{tr} (T-X'Y)'(T-X'Y)-\frac12\text{tr}\ Y'CY.
 \end{equation}
 Thus the optimum $T$ for given $Y$ is obtained by projecting 
-$X'Y$ on the set of matrices $\mathcal{T}$. 
+$X'Y$ on the set of matrices $\mathcal{T}$. We shall use the symbol $\Pi_T()$
+for the unweighted least squares projection on $\mathcal{T}$.
 
 For exploratory CFA this gives 
 $$
-T=\begin{bmatrix}A&\mid&D\end{bmatrix}=\begin{bmatrix}X'F&\mid&\text{diag}(X'U)\end{bmatrix}.
+T=\Pi_T(X'Y)=\begin{bmatrix}A&\mid&D\end{bmatrix}=\begin{bmatrix}X'F&\mid&\text{diag}(X'U)\end{bmatrix}.
 $$ 
-For confirmatory MDFA in which we require some loadings to be equal to each other and/or others to be equal to given constants finding $T$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
+For confirmatory MDFA in which we require some loadings to be equal to each other and/or others to be equal to given constants finding $\Pi_T(X'Y)$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
 
-Also
+Expanding loss gives
 \begin{equation}
 \sigma(T,Y)=\frac12\text{tr}\ C+\frac12\text{tr}\ T'T-\text{tr}\ Y'XT.\label{eq-sigmay}
 \end{equation}
-We have to maximize $\text{tr}\ Y'XT$ over all
+To compute the optimal $Y$ for given $T$ we have to maximize $\text{tr}\ Y'XT$ over all
 $n\times p$ orthonormal $Y$.
 We start with some general lemmas. Remember that the *trace norm* (a.k.a. the 
 *nuclear norm*) $\|Z\|_\star$ of a matrix $Z$ is the sum of its singular values. The trace norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
@@ -399,7 +405,8 @@ merely adds that the optimal $Y$ makes loss equal to zero if $C=TT'$.
 It factor analytic literature it is often said that the factor scores $Y$ have the
 "determinate" part $KL'$ and the "indeterminate" part $K_\perp SL_\perp'$. There
 are some simple rank conditions which imply that the indeterminate part does not play a
-role in Algorithm A, which uses $X'Y$ to update $T$,  and in the fitted values, which uses $YT'$.
+role in Algorithm A, which uses $X'Y$ to update $T$, in the fitted values, which use $YT'$, 
+and in the loss function values, which use $T'X'Y$.
 
 ::: {#cor-unique}
 
@@ -482,7 +489,9 @@ that we can rewrite the ALS algorithm in such a way that it only
 involves matrices of order $m$. This alternative derivation of
 the algorithm has the additional property that it can be
 applied to $C$ without having to know $X$, which has obvious
-advantages for secondary analysis.
+advantages in secondary analysis. And factor analys publications have
+a lot of secondary analysis, using the mountain of correlation matrices 
+that have been published since 1900.
 
 ::: {#thm-als}
 Suppose $T^{(k)}$ has rank $m$. Then
@@ -609,14 +618,40 @@ The minimum of $\sigma(Y,T)$ over $Y'Y=I$ is
 \end{equation}
 First and second derivatives of the trace norm with respect to $T$ were computed in @deleeuw_E_25d. The gradient is
 \begin{equation}
-\mathcal{D}\sigma_\star(T)=T-CT(T'CT)^{-1/2}.\label{eq-projgrad}
+\mathcal{D}\|X\cdot\|_\star(T)=CT(T'CT)^{-1/2}.\label{eq-projgradnrm}
 \end{equation}
-With this formula for the gradient many general purpose optimization methods for minimizing the projected loss function \eqref{eq-projloss} become available. The R function
+from which wer see that
+\begin{equation}
+\mathcal{D}\sigma_\star(T)=T-CT(T'CT)^{-1/2}.\label{eq-projgradsig}
+\end{equation}
+Thus the iterative algorithm
+$$
+T\leftarrow CT(T'CT)^{-1/2}
+$$
+is a fixed-point algorithm, and $T\in\mathcal{T}$ is a fixed point of ... if and only if $\mathcal{D}\sigma_\star(T)=0$.
+Since $\|XT\|_\star(T)$ is convex, homogeneous, and (under our assumptions) differentiable in $T$ 
+algorithm ... is also a majorization (or MM) algorithm.
+
+If the projection $\Pi_T()$ is such that it replaces a some elements of $T$ by zeroes, then we can use
+the projected gradient
+\begin{equation}
+\mathcal{D}\sigma_\star(T)=\Pi_T(T-CT(T'CT)^{-1/2}).\label{eq-projgradcor}
+\end{equation}
+With this formula for the (projected) gradient many general purpose optimization methods for minimizing the projected loss function \eqref{eq-projloss} become available. The R function
 mdfaAlgorithmG() in the repository uses the BFGS method of the optim() function from the stats package (@r_core_team_25). 
+
+We can get slightly more generality by defining $\mathcal{T}$ as the set of matricves of the form
+$$
+T=T_0+\sum_{s=1}^q\theta_s T_s,
+$$
+which allows, for example, for patterns with some elements fixed to known values and some elements required to be equal to other elements.
+$$
+\mathcal{D}_s\sigma_\star=\text{tr}\ T'T_s-\text{tr}\ (T'CT)^{-1/2}T'CT_s
+$$
 
 Compared with Algorithm B we can perhaps expect some gain in efficiency, because of the
 superlinear convergence of the BFGS method, but we lose some flexibility by not having
-the projections $\Pi_T()$ available.
+the general projections $\Pi_T()$ available.
 
 
 ## Algorithm H
@@ -640,16 +675,131 @@ where $Q_s:=T_s'CT+T'CT_s$. It follows that
 \mathcal{D}_{st}\lambda_\nu=-2x_\nu'Q_s(A-\lambda_\nu I)^+Q_tx_\nu+2x_\nu'T_s'CT_tx_\nu.\label{eq-mdfaddl}
 \end{equation}
 
+## Algorithm W
+
+An MDFA procedure $X\rightarrow(Y,T)$ maps data matrices
+$X$ to a scores $Y$ and loadings $T$. The
+procedure is scale-free if for all diagonal $\Phi$
+we have $X\Phi\rightarrow(Y,T\Phi)$. Because of the
+uncertainly of appropriate units for the variables
+it is generally thought that scale-freeness is a
+desirable property of multivariate technique. 
+
+The MDFA least squares
+techniques we have discussed so far are not scale-free, but 
+they can be made scale-free in various ways.
+The first way is a traditional one. We normalize the data
+in $X$ to unit length, so that $C=X'X$ becomes a
+correlation matrix. This can be formalized as 
+minimizing
+$$
+\sigma_W(T,Y):=\text{tr}\ (X-YT')W(X'-TY')
+$$
+with $W:=\text{diag}^{-1}(C)$. @adachi_12
+proposes instead to use $\smash{W=C^{-1}}$.
+But no matter how we choose the positive definite
+$W$ the computational consequences are
+easy to handle.
+
+We have
+$$
+\sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ (T-X'Y)'W(T-X'Y)-\text{tr}\ Y'XWX'Y
+$$
+and consequently the optimal $T$ for given $Y$ is the
+projection in the metric $W$ of $X'Y$ on $\mathcal{T}$.
+This may or may not be more complicated than unweighted
+projection, depending on the definition of $\mathcal{T}$.
+
+Also
+$$
+\sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ T'WT-2\ \text{tr}\ Y'XWT,
+$$
+which means the optimal $Y$ for given $T$ is the 
+(unweighted) projection of $XWT$ on the orthonormal 
+$n\times p$ matrices.
+
+As in the unweighted case we can combine the two ALS
+steps into a one-step upgrade for $T$.
+$$
+T^{(k+1)}=\Pi_T(CWT(\{T^{(k)}\}'WCWT^{(k)})^{-1/2})
+$$
+
 
 \sectionbreak
 
 # Examples
 
+## MacDonell
+
+Our first example illustrates and compares several techniques for exploratory CFA. The example is of some historical interest. The data are one of the first published
+correlation matrices, from the very first volume of Biometrika.
+@macdonell_02, a retired businessman volunteering in Karl Pearson's lab,
+analyzed the politically incorrect 
+correlations between seven physical characteristics of 3000 criminals. 
+```{r macddata, echo = FALSE}
+matrixPrint(macdonell, digits = 5, width = 7, flag = "")
+```
+MacDonell mentions that Pearson advised him to use principal component analysis
+to find numerical indices that could be used to rank and classify criminals.
+He promises the PCA results in a follow-up paper, which never appeared (I think). 
+It was probably too early for PCA, which was brand new at the time (@pearson_01).
+
+We will compute two-factor exploratory MDFA, ULS, and ML solutions. To compare them
+we rotate the loadings of all three so that $A'D^{-2}A$ is diagonal.
+
+```{r macdcfa, echo = FALSE}
+mchb <- mdfaAlgorithmB(macdonell, mctold, mdfaCFAProjection, verbose = FALSE)
+mcgb <- mdfaConvertTtoAD(mchb$tmat)
+```
+We cannot apply algorithm A here, because we do not have  the data matrix $X$, only the correlation matrix $C$. Algorithm B converges in `r mchb$itel` iterations. The loadings are
+```{r macbloadings, echo = FALSE}
+matrixPrint(mcgb$loadings)
+```
+and the uniquenesses are
+```{r macbuniq, echo = FALSE}
+matrixPrint(mcgb$uniquenesses)
+```
+
+```{r maclsfa, echo = FALSE}
+mchls <- lsfa(rep(.3, 7), macdonell, p = 2, iverbose = FALSE, jverbose = FALSE)
+```
+The ULS algorithm uses 5 Thomson and 4 Newton iterations to minimize loss. Because of the Newton
+iterations the loss function values converged to 15 decimals precision. The loadings are
+```{r maculoadings, echo = FALSE}
+row.names(mchls$a) <- row.names(macdonell)
+matrixPrint(mchls$a)
+```
+and the uniquenesses are
+```{r macuuniq, echo = FALSE}
+matrixPrint(mchls$d)
+```
+
+```{r macmlfa, echo = FALSE}
+mchml <- factanal(NULL, 2, covmat = macdonell)
+```
+Next we apply the maximum likelihood method, using factanal() from the stats package (@r_core_team_25).
+The loadings are
+```{r maclloadings, echo = FALSE}
+anew <- mchml$loadings
+dnew <- mchml$uniquenesses
+mat <- crossprod(anew, diag(1 / dnew) %*% anew)
+mvc <- eigen(mat)$vectors
+anew <- -anew %*% mvc
+row.names(anew) <- row.names(macdonell)
+matrixPrint(anew)
+```
+and the uniquenesses are
+```{r macluniq, echo = FALSE}
+matrixPrint(dnew)
+```
+
+comparison
+
+
 ## Emmett
 
-Our example is the correlation matrix of order nine from 
-@emmett_49, also used in @lawley_maxwell_71, pp. 42-44. We use three common factors, and compare our results with those obtained using multinormal maximum likelihood (@lawley_maxwell_71, table 4.2). We cannot apply algorithm A here, because we do not have 
-the data matrix $X$, only the correlation matrix $C$.
+Our next example is the correlation matrix of order nine from 
+@emmett_49, also used in @lawley_maxwell_71, pp. 42-44. We use three common factors, and compare our results with those obtained using multinormal maximum likelihood (@lawley_maxwell_71, table 4.2). 
 
 ```{r emmett, echo = FALSE}
 matrixPrint(emmett, digits = 3, width = 5, flag = "")
@@ -657,39 +807,46 @@ matrixPrint(emmett, digits = 3, width = 5, flag = "")
 
 ```{r alga, echo = FALSE, cache = TRUE}
 source("emmett.R")
-h <- mdfaAlgorithmB(emmett, emtold, itmax = 1000, verbose = FALSE)
-g <- mdfaConvertTtoAD(h$tmat)
+hemmd <- mdfaAlgorithmB(emmett, emtold, itmax = 1000, verbose = FALSE)
+gemmd <- mdfaConvertTtoAD(hemmd$tmat)
 ```
 
+
 As the initial estimate for $A$ we use the first three
-principal components, scaled to the length of the corresponding eigenvalues. The initial estimate of $D$ is the square root of the diagonal of $I-AA'$. Algorithm B converges in `r h$itel` iterations to a loss of `r h$loss`, where convergence is defined
+principal components, scaled to the length of the corresponding eigenvalues. The initial estimate of $D$ is the square root of the diagonal of $I-AA'$. Algorithm B converges in `r hemmd$itel` iterations to a loss of `r hemmd$loss`, where convergence is defined
 by a loss-decrease in successive iterations of less than 
 `r 1e-10`. The MDFA uniquenesses are
 
 ```{r alga_d, echo = FALSE}
-matrixPrint(g$uniquenesses, digits = 3, width = 5, flag ="")
+matrixPrint(gemmd$uniquenesses, digits = 3, width = 5, flag ="")
 ```
+
+```{r mlemmett, echo = FALSE}
+hemmm <- factanal(NULL, 3, covmat = emmett)
+```
+
 The uniquenesses from the ML solution in Lawley and Maxwell's Table 4.2 are
 ```{r ml_d, echo = FALSE}
-mld <- c(.450, .427, .617, .212, .381, .177, .400, .462, .231)
-matrixPrint(mld, digits = 3, width = 5, flag ="")
+matrixPrint(hemmm$uniquenesses, digits = 3, width = 5, flag = "")
 ```
 Comparing loadings is slightly more involved. The ML solution
 is rotated so that $A'D^{-2}A$ is diagonal, so we rotate the 
 MDFA solution in the same way. The MDFA loadings are
 
 ```{r alga_a, echo = FALSE}
-matrixPrint(-g$loadings, digits = 3, width = 5)
+matrixPrint(-gemmd$loadings, digits = 3, width = 5)
 ```
 
+```{r}
+hemmm$criteria
+```
 The ML loadings are
 ```{r ml_a, echo = FALSE}
-ml_a <- matrix(c(
-  .664, .689, .493, .837, .705, .819, .661, .458, .766,
-  .321, .247, .302, -.292, -.315, -.377, .396, .296, .427,
-  .074, -.193, -.222, -.035, -.153, .105, -.078, .491, -.012),
-  9, 3)
-matrixPrint(ml_a, digits = 3, width = 5)
+a <- hemmm$loadings
+mat <- crossprod(a, diag(1 / hemmm$uniquenesses) %*% a)
+mvc <- eigen(mat)$vectors
+matrixPrint(a %*% mvc, digits = 3, width = 5)
+  
 ```
 
 The Emmett example is somewhat atypical, because the CFA model with three factors has a near perfect fit. This explains why the MDFA and ML solutions are nearly identical.
@@ -697,21 +854,18 @@ The Emmett example is somewhat atypical, because the CFA model with three factor
 The AlgorithmB solution computed by Algorithm G requires 29 function evaluations and 27 gradient evaluations.
 
 
-```{r}
-source("emmett.R")
+```{r compo, eval = FALSE, echo = FALSE}
 suppressWarnings(h <- microbenchmark(
   mdfaAlgorithmB(emmett, emtold, itmax = 1000, verbose = FALSE),
-  factanal(NULL, factors = 3, covmat = emmett)
+  mdfaAlgorithmG(emmett, emtold),
 ))
+print(h)
 ```
-
-
-
 
 ## Maxwell
 
-Lawley and Maxwell give a second example, using data also used by
-@maxwell_61 (ten variables, 810 observations). Thew cxorrelation matrix
+Lawley and Maxwell give a second example, using data taken from
+@maxwell_61 (ten variables, 810 observations). The correlation matrix
 is
 
 ```{r maxwell, echo = FALSE}
@@ -759,15 +913,21 @@ maxml_a <- matrix(c(
 matrixPrint(maxml_a, digits = 3, width = 5)
 ```
 
+## Tucker
+
+We continue with a simple confirmatory CFA example, with data from @tucker_58. This example was also
+analyzed with ML by @joreskog_69.
+
 ## Cattell
 
-This example uses the correlation matris between 12 cognitive variables from @cattell_63,
+This example uses the correlation matrix between 12 cognitive variables from @cattell_63,
 included in the psych package (@revelle_25), to illustrate fitting a group factor model.
-The variables 1 and 2 are verbal ability, 3 and 4 are spatial ability, 5 and 6 are reasoning, 7 and 8 are numerical ability. The first eight are from the Thurstone {Primary Abilities test, and the last four are from the (IPAT) Culture Fair Intelligence Test.
-We apply Algorithm B with 6 factors: one general factor and five group factors. 
+The variables 1 and 2 measures verbal ability, 3 and 4 are spatial ability, 5 and 6 are reasoning, 7 and 8 are numerical ability. The first eight are from the Thurstone Primary Abilities test, and the last four are from the (IPAT) Culture Fair Intelligence Test.
+
+We apply Algorithm B with 6 factors: one general factor and five group factors. The projection $\Pi_A()$ copies all
+elements from the first column of $X'F$, elements one and two from column two, three and four from column three, five and six from column four, seven and eight from column five, and nine to twelve from column six. All other elements of $\Pi_A(X'F)$ are zero, and $\Pi_D(X'F)=\text{diag}(X'F)$ as usual.
 
 ```{r cattell, echo = FALSE}
-source("cattell.R")
 h <- mdfaAlgorithmB(cattell, catold, cattellProjection, itmax = 1000, verbose = FALSE)
 g <- mdfaConvertTtoAD(h$tmat, rotate = FALSE)
 ```
@@ -776,15 +936,57 @@ are
 ```{r cattella, echo = FALSE}
 matrixPrint(g$loadings)
 ```
-and the uniquesnesses are
+and the uniquenesses are
 ```{r cattelld, echo = FALSE}
 matrixPrint(g$uniquenesses)
 ```
+
+```{r}
+r <- diag(6)
+r[-1, -1] <- matrix(rnorm(25), 5, 5)
+matrixPrint(r)
+matrixPrint(tcrossprod(r))
+h <- g$loadings %*% r
+matrixPrint(h[1, -1] / h[2, -1])
+matrixPrint(h[3, -1] / h[4, -1])
+print(svd(h[9:12, -1]))
+```
+
 @rindskopf_rose_88 also do a group factor analysis, but they allow for correlations
-between the five group factors. This makes their results not directly comparable to 
-ours.
+between the five group factors. This amounts to imposing the structure
+$$
+A=\begin{bmatrix}
+a_{11}&a_2&0&0&0&0\\
+a_{21}&0&a_3&0&0&0\\
+a_{31}&0&0&a_4&0&0\\
+a_{41}&0&0&0&a_5&0\\
+a_{51}&0&0&0&0&a_6\\
+\end{bmatrix}
+\begin{bmatrix}
+1&0\\
+0&r_{2}'\\
+0&r_{3}'\\
+0&r_{4}'\\
+0&r_{5}'\\
+0&r_{6}'
+\end{bmatrix}=
+\begin{bmatrix}
+a_{11}&a_2^{\ }r_2'\\
+a_{21}&a_3^{\ }r_3'\\
+a_{31}&a_4^{\ }r_4'\\
+a_{41}&a_5^{\ }r_5'\\
+a_{51}&a_6^{\ }r_6'
+\end{bmatrix}
+$$
+The vectors $r_j$ are all of length five, $a_2, a_3, a_4, a_5$ are of length two, and $a_6$ is of length four.
+This shows that $\Pi_A()$ copies the first column of $X'F$ and computes five rank one approximations to the
+remaining blocks. This is not a linear projection, but one that is computationally still easy if we use
+the SVD of each block.
 
-
+```{r cattellsvd, echo = FALSE}
+catsvd <- cattellSVDProjection(catold)
+h <- mdfaAlgorithmB(cattell, catsvd, cattellSVDProjection, itmax = 1000, verbose = FALSE)
+```
 
 ## BFI
 
@@ -810,58 +1012,6 @@ autoplot(h)
 \sectionbreak
 
 # Discussion
-
-
-
-## Correlated Factors and Errors
-
-
-## Scale Freeness
-
-An MDFA procedure $X\rightarrow(Y,T)$ maps data matrices
-$X$ to a scores $Y$ and loadings $T$. The
-procedure is scale-free if for all diagonal $\Phi$
-we have $X\Phi\rightarrow(Y,T\Phi)$. The MDFA least squares
-techniques we have discussed so far are not scale-free, but 
-they can be made scale-free in various ways.
-
-The first way is traditional. We normalize the data
-in $X$ to unit length, so that $C=X'X$ becomes a
-correlation matrix. This can be formalized as 
-minimizing
-$$
-\sigma_W(T,Y):=\text{tr}\ (X-YT')W(X'-TY')
-$$
-with $W:=\text{diag}^{-1}(C)$. @adachi_12
-proposes instead to use $\smash{W=C^{-1}}$.
-But no matter how we choose the positive definite
-$W$ the computational consequences are
-easy to handle.
-
-We have
-$$
-\sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ (T-X'Y)'W(T-X'Y)-\text{tr}\ Y'XWX'Y
-$$
-and consequently the optimal $T$ for given $Y$ is the
-projection in the metric $W$ of $X'Y$ on $\mathcal{T}$.
-This may or may not be more complicated than unweighted
-projection, depending on the definition of $\mathcal{T}$.
-
-Also
-$$
-\sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ T'WT-2\ \text{tr}\ Y'XWT,
-$$
-which means the optimal $Y$ for given $T$ is the 
-(unweighted) projection of $XWT$ on the orthonormal 
-$n\times p$ matrices.
-
-As in the unweighted case we can combine the two ALS
-steps into a one-step upgrade for $T$.
-$$
-T^{(k+1)}=\Pi_T(CWT(\{T^{(k)}\}'WCWT^{(k)})^{-1/2})
-$$
-
-## Uniqueness
 
 
 ## Statistical Considerations

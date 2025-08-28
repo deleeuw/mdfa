@@ -1,9 +1,10 @@
 library(RSpectra)
 source("mdfaAuxiliary.R")
+source("mdfaProjections.R")
 
 mdfaAlgorithmB <- function(cmat,
                            told,
-                           proj = mdfaProject,
+                           proj = mdfaCFAProjection,
                            itmax = 1000,
                            eps = 1e-10,
                            verbose = TRUE) {

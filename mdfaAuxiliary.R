@@ -41,3 +41,4 @@ mdfaComputeYfromT <- function(x, tmat) {
   et <- svd(xt)
   ydet <- tcrossprod(et$u[, 1:m], et$v[, 1:m])
 }
+

@@ -1,6 +1,6 @@
 mdfaAlgorithmA <- function(x,
                            told,
-                           proj = mdfaProject,
+                           proj = mdfaCFAProject,
                            itmax = 1000,
                            eps = 1e-10,
                            verbose = TRUE) {
@@ -43,7 +43,4 @@ mdfaAlgorithmA <- function(x,
     ))
 }
 
-mdfaProject <- function(t) {
-  q <- ncol(t) - nrow(t)
-  return(cbind(t[, 1:q], diag(diag(t[, -(1:q)]))))
-}
+

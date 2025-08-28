@@ -9,9 +9,9 @@ mdfaAlgorithmG <- function(cmat, told) {
     gr = theGrad,
     method = "BFGS",
     control = list(trace = 6),
-    cp = c,
-    nrow = nrow,
-    ncol = ncol
+    cmat = cmat,
+    nrow = m,
+    ncol = p
   )
   tmat <- matrix(h$par, m, p)
   return(
@@ -32,14 +32,14 @@ theFunc <- function(told, cmat, nrow, ncol) {
   return(func)
 }
 
-theGrad <- function(a, cp, nrow, ncol) {
+theGrad <- function(a, cmat, nrow, ncol) {
   amt <- matrix(a, nrow, ncol)
-  aca <- crossprod(amt, cp %*% amt)
+  aca <- crossprod(amt, cmat %*% amt)
   eca <- eigen(aca)
   evc <- eca$vectors[, 1:nrow]
   eva <- diag(1 / sqrt(eca$values[1:nrow]))
   mva <- evc %*% eva %*% t(evc)
-  return(as.vector(tp * (a - cp %*% amt %*% mva)))
+  return(as.vector(a - cmat %*% amt %*% mva))
 }
 
 

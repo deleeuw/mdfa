@@ -67,8 +67,12 @@ lsfa <- function(dold,
     dold <- dnew
     fold <- fnew
   }
+  
   enew <- eigen(cmat - diag(dnew))
   anew <- enew$vectors[, 1:p] %*% sqrt(diag(enew$values[1:p]))
+  mat <- crossprod(anew, diag(1 / dnew) %*% anew)
+  mvc <- eigen(mat)$vectors
+  anew <- anew %*% mvc
   return(list(a = anew, d = dnew, f = fnew, itel = itel, jtel = jtel))
 }
 
