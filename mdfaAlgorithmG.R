@@ -1,5 +1,5 @@
 
-mdfaAlgorithmG <- function(cmat, told) {
+mdfaAlgorithmG <- function(cmat, told, ctemp) {
   m <- nrow(told)
   p <- ncol(told)
   q <- p - m
@@ -8,8 +8,9 @@ mdfaAlgorithmG <- function(cmat, told) {
     fn = theFunc,
     gr = theGrad,
     method = "BFGS",
-    control = list(trace = 6),
-    cmat = cmat,
+    control = list(trace = 0),
+    clmat = cmat,
+    cltemp = ctemp,
     nrow = m,
     ncol = p
   )
@@ -23,23 +24,24 @@ mdfaAlgorithmG <- function(cmat, told) {
   )
 }
 
-theFunc <- function(told, cmat, nrow, ncol) {
-  tcp <- sum(diag(cmat))
+theFunc <- function(told, clmat, cltemp, nrow, ncol) {
+  tcp <- sum(diag(clmat))
   tap <- sum(told^2)
   amt <- matrix(told, nrow, ncol)
-  aca <- crossprod(amt, cmat %*% amt)
+  aca <- crossprod(amt, clmat %*% amt)
   func <- tcp + tap - 2 * sum(sqrt(svd(aca)$d[1:nrow]))
   return(func)
 }
 
-theGrad <- function(a, cmat, nrow, ncol) {
+theGrad <- function(a, clmat, cltemp, nrow, ncol) {
   amt <- matrix(a, nrow, ncol)
-  aca <- crossprod(amt, cmat %*% amt)
+  aca <- crossprod(amt, clmat %*% amt)
   eca <- eigen(aca)
   evc <- eca$vectors[, 1:nrow]
   eva <- diag(1 / sqrt(eca$values[1:nrow]))
   mva <- evc %*% eva %*% t(evc)
-  return(as.vector(a - cmat %*% amt %*% mva))
+  grad <- cltemp * (a - clmat %*% amt %*% mva)
+  return(as.vector(grad))
 }
 
 

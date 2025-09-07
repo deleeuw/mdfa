@@ -14,3 +14,7 @@ mcavec <- mcaeig$vectors[, 1:2]
 mcaval <- diag(sqrt(mcaeig$values[1:2]))
 mcacom <- mcavec %*% mcaval
 mctold <- cbind(mcacom, diag(sqrt(1 - rowSums(mcacom^2))))
+
+mcwdia <- diag(1 / diag(macdonell))
+mcwful <- solve(macdonell)
+mcwide <- diag(7)

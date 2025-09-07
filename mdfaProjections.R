@@ -3,6 +3,13 @@ mdfaCFAProjection <- function(t) {
   return(cbind(t[, 1:q], diag(diag(t[, -(1:q)]))))
 }
 
+mdfaCFAWProjection <- function(t, wmat) {
+  q <- ncol(t) - nrow(t)
+  a <- t[, 1:q]
+  dtilde <- diag(wmat %*% t[, -(1:q)]) / diag(wmat)
+  return(cbind(a, diag(dtilde)))
+}
+
 cattellProjection <- function(tmat) {
   tmat[-(1:2), 2] <- 0
   tmat[-(3:4), 3] <- 0

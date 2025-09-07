@@ -7,8 +7,10 @@ tuckerProjection <- function(tmat) {
   return(tmat)
 }
 
-cmat <- as.matrix(Tucker)
-aeig <- eigen(cmat)
+tugroups <- c(1, 1, 1, 1, 2, 2, 2, 2)
+
+tucker <- as.matrix(Tucker)
+aeig <- eigen(tucker)
 avec <- aeig$vectors[, 1:4]
 aval <- diag(sqrt(aeig$values[1:4]))
 acom <- avec %*% aval

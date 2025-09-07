@@ -2,9 +2,10 @@ library(RSpectra)
 source("mdfaAuxiliary.R")
 source("mdfaProjections.R")
 
-mdfaAlgorithmB <- function(cmat,
+mdfaAlgorithmW <- function(cmat,
+                           wmat,
                            told,
-                           proj = mdfaCFAProjection,
+                           projw = mdfaCFAWProjection,
                            itmax = 1000,
                            eps = 1e-10,
                            verbose = FALSE) {
@@ -12,19 +13,19 @@ mdfaAlgorithmB <- function(cmat,
   m <- nrow(told)
   p <- ncol(told)
   q <- p - m
-  ssqc <- sum(diag(cmat))
-  ssqa <- sum(told^2)
-  tct <- crossprod(told, cmat %*% told)
+  ssqc <- sum(wmat * cmat)
+  ssqa <- sum(wmat * tcrossprod(told))
+  tct <- crossprod(told, wmat %*% cmat %*% wmat %*% told)
   ect <- eigs_sym(tct, m)
   fold <- ssqc + ssqa - 2 * sum(sqrt(ect$values))
   repeat {
     evc <- ect$vectors
     eva <- sqrt(ect$values)
     mva <- evc %*% diag(1 / eva) %*% t(evc)
-    tnew <- proj(cmat %*% told %*% mva)
-    tct <- crossprod(tnew, cmat %*% tnew)
+    tnew <- projw(cmat %*% wmat %*% told %*% mva, wmat)
+    tct <- crossprod(tnew, wmat %*% cmat %*% wmat %*% tnew)
     ect <- eigs_sym(tct, m)
-    ssqa <- sum(tnew^2)
+    ssqa <- sum(wmat * tcrossprod(tnew))
     fnew <- ssqc + ssqa - 2 * sum(sqrt(ect$values))
     if (verbose) {
       cat(
