@@ -76,9 +76,10 @@ appreciated, but is not required. The files can be found at
 Suppose $X$ is an $n\times m$ "tall" data matrix ($n\geq m$). 
 We say that $X=YT'$, with $Y$
 an $n\times p$ matrix and $T$ an $m\times p$ matrix, is a 
-*decomposition of order $p$* of $X$. Decompositions of various kinds play a key role in theoretical and numerical linear algebra (@stewart_98). 
+*decomposition of order* $p$ of $X$. Decompositions of various kinds play a key role in 
+multivariate data analysis, and in theoretical and numerical linear algebra (@stewart_98). 
 
-In this paper we are interested in the *factor analytic decomposition of order $p$*,
+In this paper we are interested in the *factor analytic decomposition of order* $p$,
 which is characterized by $m\leq p\leq n$ and by the requirement $Y'Y=I$. In addition there may be constraints on $T$, which we write in the general form $T\in\mathcal{T}$, with $\mathcal{T}$ a subset of $\mathbb{R}^{m\times p}$, the space of all $m\times p$ matrices.
 Note that $Y$ is a "tall" matrix ($n\geq p$), while $T$ is "wide" ($m\leq p$).
 
@@ -95,7 +96,7 @@ Mathematically this introduces the problem to find the conditions
 under which equations \eqref{eq-fa1}-\eqref{eq-fa3} can be solved for $Y$ and $T$, 
 and to describe the set of solutions if the system is solvable.
 Computationally the problem is to define what is meant by 
-"approximately" and to find a technique that produces an
+"approximately" and to find a technique that produces such an
 approximate solution. Typically this is done by defining a
 non-negative loss function that measures departure from perfect fit and
 an algorithm for minimizing it. 
@@ -241,7 +242,7 @@ $M_1$ are uniquely determined. Matrices $K_0$ and
 $M_0$ consist of orthonormal bases for the null-spaces of $X$ and $T$,
 which are only determined up to rotations. We can select any one of these bases
 and absorb the rotations in the arbitrary matrix $V$.
-The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT'$ there is a linear subspace of solutions $Y$ of $X=YT'$. Even if $T$ is identified, $Y$ is not. This is the *factor indeterminacy problem*, which has haunted the field for more than 100 years.
+The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT'$ there is a nonlinear manifold of solutions $Y$ of $X=YT'$. Even if $T$ is identified, $Y$ is not. This is the *factor indeterminacy problem*, which has haunted the field for more than 100 years.
 (@steiger_schoenemann_78).
 
 \sectionbreak
@@ -254,11 +255,11 @@ There are several factor analytic decomposition techniques that use least square
 \begin{equation}
 \sigma(T)=\frac12\text{SSQ}(C-TT'),\label{eq-minres}
 \end{equation}
-where $\text{SSQ}()$ stands for the unweighted sum of squares. Minimizing \eeref{eq-minres)\} is the Unweighted Least Squares or ULS method of factor analysis.
+where $\text{SSQ}()$ stands for the unweighted sum of squares. Minimizing \eqref{eq-minres)} is the *Unweighted Least Squares (ULS)* method of factor analysis.
 
 For CFA \eqref{eq-minres} becomes
 \begin{equation}
-\sigma(T)=\frac12\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
+\sigma(A,D)=\frac12\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
 \end{equation}
 An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function \eqref{eq-minrescfa} over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course this only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa}
 are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_69 and @joreskog_vanthillo_71.
@@ -268,9 +269,10 @@ squares loss function
 \begin{equation}
 \sigma(A, D, F)=\frac12\text{tr}\ (X-FA')D^{-2}(X-FA')',\label{eq-young-whittle}
 \end{equation}
-which has the disadvantage that it assumes $D$ is known, or at least that there is a reasonable prior estimate of $D$. Minimizing \eqref{eq-young-whittle} has the advantage that the problem becomes a form of principal component analysis (PCA), in which the solution can be computed with a single SVD.
+which has the disadvantage that it assumes $D$ is known, and the advantage that the 
+problem becomes a form of principal component analysis (PCA), in which the solution can be computed with a single sinu=gular value decomposition.
 
-It is tempting to use block relaxation to minimize \eqref{eq-young-whittle}, alternating finding the optimum
+It is tempting to use a block method to minimize \eqref{eq-young-whittle}, alternating finding the optimum
 $F$ and $A$ for fixed $D$, and then repeating this iteratively with the new $D$ equal to
 \begin{equation}
 D^2=n^{-1}\text{diag}\ (X-FA')'(X-FA').\label{eq-yw}
@@ -279,7 +281,7 @@ This in fact corresponds to alternating minimization of the loss function
 \begin{equation}
 \sigma(A,F,D)=n\log\text{det}(D^2)+\text{tr}\ (X-FA')D^{-2}(X-FA')'.\label{eq-lawley41}
 \end{equation}
-But \eqref{eq-lawley41} is the negative likelihood loss function for the fixed factor model from @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a perfect but trivial solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
+But \eqref{eq-lawley41} is the negative likelihood loss function for the fixed factor model proposed by @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a perfect but trivial solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
 
 The file lsfa.R in the repository has a function lsfa() for MINRES factor analysis. It
 needs an initial estimate of $D$, for which we can take $\text{diag}^{-1}(C^{-1})$.
@@ -288,7 +290,7 @@ iterations. First and second derivatives are taken from @deleeuw_E_25d. Eigenval
 
 ## MDFA
 
-A more direct way of fitting the full CFA model was discussed (independently and around the same time) in the dissertation of @socan_03 and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as Matrix Decomposition Factor analysis (MDFA). Socan attributes MDFA (which they call "Direct Factor Analysis") to a 2001 personal communication and some unpublished notes of his advisor Henk Kiers.
+A more direct way of fitting the full CFA model was discussed (independently and around the same time) in the dissertation of @socan_03 and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as *Matrix Decomposition Factor analysis (MDFA)*. Socan attributes MDFA (which they call "Direct Factor Analysis") to a 2001 personal communication and some unpublished notes of their advisor Henk Kiers.
 
 In MDFA the least squares loss function is
 \begin{equation}
@@ -297,10 +299,10 @@ In MDFA the least squares loss function is
 which must be minimized over $Y'Y=I$ and $T\in\mathcal{T}$.
 
 MDFA was not immediately accepted as an alternative factor analysis technique. It made its first journal appearance in a series of papers by Unkel and Trendafilov, based largely on Unkel's dissertation (@unkel_09). Over the years they contributed a "robust"
-version of MDFA (@unkel_trendafilov_10) and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11). There is a nice review of these contributions in @unkel_trendafilov_10, with an update in @trendafilov_unkel_krzanowski_13.
+version of MDFA (@unkel_trendafilov_10) and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11). There is a nice review of their contributions in @unkel_trendafilov_10, with an update in @trendafilov_unkel_krzanowski_13.
 
 There have been additional important contributions to MDFA in @adachi_12, @adachi_trendafilov_18,
-@stegeman_16, @terada_25, @yamashita_25. We will discuss these recent contributions in various places in our present paper. When googling MDFA, keep in mind that Adachi initially used "Data-Fitting Factor Analysis", while Stegeman used the "Data Factor Model". 
+@stegeman_16, @terada_25, and @yamashita_25. We will discuss these recent contributions in various places in our present paper. When googling MDFA, keep in mind that Adachi initially used "Data-Fitting Factor Analysis", while Stegeman used the "Data Factor Model". 
 
 
 \sectionbreak
@@ -318,7 +320,7 @@ We complete the square, as in
 \frac12\text{tr}\ C+\frac12\text{tr} (T-X'Y)'(T-X'Y)-\frac12\text{tr}\ Y'CY.
 \end{equation}
 Thus the optimum $T$ for given $Y$ is obtained by projecting 
-$X'Y$ on the set of matrices $\mathcal{T}$. We shall use the symbol $\Pi_{\mathcal{T}}()$
+$X'Y$ on the set of matrices $\mathcal{T}$. We shall use $\Pi_{\mathcal{T}}()$
 for the unweighted least squares projection on $\mathcal{T}$.
 
 For exploratory CFA this gives 
@@ -334,26 +336,26 @@ Expanding loss gives
 To compute the optimal $Y$ for given $T$ we have to maximize $\text{tr}\ Y'XT$ over all
 $n\times p$ orthonormal $Y$.
 We start with some general lemmas. Remember that the *trace norm* (a.k.a. the 
-*nuclear norm*) $\|Z\|_\star$ of a matrix $Z$ is the sum of its singular values. The trace norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
+*nuclear norm*) $\|Z\|_\tau$ of a matrix $Z$ is the sum of its singular values. The trace norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
 
 ::: {#lem-procrustus}
-If $X$ and $Y$ are $n\times p$ with $Y'Y=I$ then 
+If $Z$ and $Y$ are $n\times p$ with $Y'Y=I$ then 
 \begin{equation}
-\text{tr}\ Y'X\leq\|X\|_\star.\label{eq-tnorm}
+\text{tr}\ Y'Z\leq\|Z\|_\tau.\label{eq-tnorm}
 \end{equation}
 :::
 
 :::{.proof}
-The stationary equations are $X=YM$ with $Y'Y=I$ and $M$ a symmetric matrix of Lagrange multipliers of order $p$. It follows that $M^2=X'X$ and thus $M$ is the (unique) positive semi-definite symmetric square root $\smash{(X'X)^{1/2}}$
-At the maximum $X=YM$ implies $\text{tr}\ Y'X=\text{tr}\ M=\|X\|_\star$.
+The stationary equations are $Z=YM$ with $Y'Y=I$ and $M$ a symmetric matrix of Lagrange multipliers of order $p$. It follows that $M^2=Z'Z$ and thus $M$ is the (unique) positive semi-definite symmetric square root $\smash{(Z'Z)^{1/2}}$
+At the maximum $Z=YM$ implies $\text{tr}\ Y'Z=\text{tr}\ M=\|X\|_\tau$.
 :::
 
-Note that @lem-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $X$ of rank $r$.
+Note that @lem-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $Z$ of rank $r$.
 
 ::: {#lem-construct}
-The $n\times p$ orthonormal $Y$ maximizes $\text{tr}\ Y'X$, with 
+The $n\times p$ orthonormal $Y$ maximizes $\text{tr}\ Y'Z$, with 
 \begin{equation}
-X=\begin{bmatrix}K&K_\perp\end{bmatrix}
+Z=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
 \begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-xa}
 \end{equation}
@@ -366,7 +368,7 @@ for some $(n-r)\times(p-r)$ matrix $S$ with $S'S=I$.
 
 ::: {.proof}
 Partition the columnwise orthonormal $n\times p$ matrix 
-$Y$ in the same way as $X$.
+$Y$ in the same way as $Z$.
 \begin{equation}
 Y=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}P&Q\\R&S\end{bmatrix}
@@ -380,7 +382,8 @@ $(n-r)\times(p-r)$ matrix with $S'S=I$. Thus the optimum $Y$ is
 as given by \eqref{eq-yopt}.
 :::
 
-We can now apply the lemmas to minimizing the loss in \eqref{eq-sigmay}.
+We can now apply the lemmas to minimizing the loss in \eqref{eq-sigmay}. This generalizes
+the fundamental theorem of factor analysis to the case of imperfect fit.
 
 ::: {#thm-procrustus}
 If the $n\times p$ matrix $XT$ has rank $m$ with $m<p<n$ and "fat" singular value decomposition
@@ -390,7 +393,7 @@ XT=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-xta}
 \end{equation}
 then the maximum of $\text{tr}\ Y'XT$ over $n\times p$ orthonormal $Y$ is 
-$\|XT\|_\star$, attained for all $Y$ with
+$\|XT\|_\tau$, attained for all $Y$ with
 \begin{equation}
 Y=KL'+K_\perp SL_\perp',\label{eq-yoptt}
 \end{equation}
@@ -401,24 +404,22 @@ $(n-r)\times(p-r)$ matrix with $S'S=I$
 Directly from @lem-construct.
 :::
 
-It is important to note that in MDFA we cannot take $Y=KL'$, because then $Y'Y=LL'$, which is of rank $r\leq m$ and thus not equal to the identity if $r<p$. Also note that formula \eqref{eq-yoptt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. The fundamental theorem
-merely adds that the optimal $Y$ makes loss equal to zero if $C=TT'$.
+It is important to note that in MDFA we cannot use $Y=KL'$, because then $Y'Y=LL'$, which is of rank $r\leq m$ and thus not equal to the identity if $r<p$. Also note that formula \eqref{eq-yoptt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. The fundamental theorem merely adds that the optimal $Y$ makes loss equal to zero if $C=TT'$.
 
-It factor analytic literature it is often said that the factor scores $Y$ have the
+In factor analytic literature it is often said that the factor scores $Y$ have the
 "determinate" part $KL'$ and the "indeterminate" part $K_\perp SL_\perp'$. There
 are some simple rank conditions which imply that the indeterminate part does not play a
-role in Algorithm A, which uses $X'Y$ to update $T$, in the fitted values, which use $YT'$, 
-and in the loss function values, which use $T'X'Y$.
+role in Algorithm A, which uses $X'Y$ to update $T$, and in the fitted values, which use $YT'$. 
+And consequently in the loss function values, which use $T'X'Y$.
 
 ::: {#cor-unique}
 
-If $XT$ has rank $m$ and $Y$ is given by \eqref{eq-yoptt} then
+If $XT$ has rank $m$ and  $Y=KL'+K_\perp SL_\perp'$ then
 
 1. $X'Y=X'KL'=CT(T'CT)^{-1/2}$. 
 
 2. $YT'=KL'T'=XT(T'CT)^{-1/2}T'$.
 
-3. $T'X'Y=(T'CT)^{1/2}$.
 :::
 ::: {.proof}
 If $XT$ is of rank $m$ then both $X$ and $T$ are of rank $m$.
@@ -427,13 +428,10 @@ This proves part one.
 
 Because $\text{rank}(X)=m$ and $XTL_\perp=0$ we have $L_\perp'T=0$. This proves part 
 two. 
-
-Part three follows directly from part one. 
 :::
 
 
-The CFA equations \eqref{eq-cfa1}-\eqref{eq-cfa6} imply that $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim C$. The second one in turn implies that $0\lesssim D^2\lesssim\text{diag}(C)$. In most CFA techniques it is possible that the estimated
-uniquenesses do not satisfy these inequality constraints
+The CFA equations \eqref{eq-cfa1}-\eqref{eq-cfa6} imply that $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim C$. The second one in turn implies that $0\lesssim D^2\lesssim\text{diag}(C)$. In most CFA techniques it is possible that the estimated uniquenesses do not satisfy these inequality constraints
 and are consequently "improper" solutions. This is true for both MINRES and ML. We
 show that it is "less true" for MDFA.
 
@@ -454,30 +452,32 @@ do not happen in MDFA. Uniquenesses are always non-negative
 and bounded above by the diagonal of $C$, i.e. for correlation 
 matrices they are always between zero and one.
 Note however that we have not shown that $D^2\lesssim C$,
-so not all improper solutions are excluded.  
-If $X'U$ is diagonal at the solution then $D^2=X'UU'X\lesssim C$. 
+so not all improper solutions are excluded. If $X'U$ is diagonal at the solution then indeed 
+$D^2=X'UU'X\lesssim C$. 
 
 The repository has a file mdfaAlgorithmA.R, with the function mdfaAlgorithmA() implementing
-Algorithm A. There is an argument proj which is a function that takes care of the least squares projections on $\mathcal{T}$. By default proj is mdfaCFAProject(), which replaces the matrix with the last $m$ columns of $T$ by its diagonal, but replacing the default projection routine allows us to incorporate any set of constraints. 
+Algorithm A. There is an argument proj which is a function that takes care of the least squares projections on $\mathcal{T}$. By default proj is mdfaCFAProject(), which replaces the last $m$ columns of $T$ by its diagonal, but changing the default projection routine allows us to incorporate any set of constraints. 
 
-We emphasize that mdfaAlgorithmA() updates $Y$
-using the determinate part $KL'$ only, which means that in our iterations we do not have $Y'Y=I$. @cor-unique show that this does not impact the sequences of loss function values and of iterates for $T$, but it does mean that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate part, but it remains true that this does not solve the original MDFA problem, which requires $Y'Y=I$. Also computing a proper $Y$ corresponding with the optimal $T$
-forces us to make a choice of $S$ in \eqref{eq-yoptt}.
+We emphasize that mdfaAlgorithmA() updates $Y$ using the determinate part $KL'$ only, which means that in our iterations (and at convergence) we do not have $Y'Y=I$. @cor-unique shows that if we were to complete $Y$ by
+adding $K_\perp SL_\perp'$ in each iteration we would get the same sequence of loss function values and the same
+sequence of $T$ values.
+
+It does mean however that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate part, but it remains true that this does not solve the original MDFA problem, which requires $Y'Y=I$. Also computing a proper $Y$ corresponding with the optimal $T$ forces us to make a choice of $S$ in \eqref{eq-yoptt}. In mdfaAlgorithmA() after convergence we optionally use the QR decompositon to compute an orthonormal bases $K_\perp$ of the left null space  and an orthonormal basis $L_\perp$ for the right null space of $XT$. We use a function identical to Null() from the package MASS (@venables_ripley_02). We choose the arbitrary $(n-m)\times(p-m)$ matrix $S$ by setting its first $p-m$ rows to the identity matrix, with the remaining rows zero.
 
 ## Algorithm B
 
-Write $\Pi_Y()$ for the least squares projection of
+Write $\Pi_Y()$ for the (generally set-valued) least squares projection of
 a matrix on the columnwise orthonormal matrices of the same
 dimension. Also write $\Pi_{\mathcal{T}}()$ for least squares
 projection on $\mathcal{T}$. Then ALS iteration $k$ of Algorithm A is
 \begin{subequations}
 \begin{align}
-Y^{(k)}&=\Pi_Y(XT^{(k)}),\label{eq-als1}\\
-T^{(k+1)}&=\Pi_{\mathcal{T}}(X'Y^{(k)}).\label{eq-als2}
+Y\leftarrow&\Pi_Y(XT),\label{eq-als1}\\
+T\leftarrow&\Pi_{\mathcal{T}}(X'Y).\label{eq-als2}
 \end{align}
 \end{subequations}
-If we assume that $\text{rank}(X)=\text{rank}(T)=m$ then it  does not matter how we choose $S$ in \eqref{eq-yopt}, because by @cor-unique for all
-choices of $S$ we have $\text{tr}\ Y'XT=\|XT\|_\star$, and all choices of $S$ give
+If we assume that $\text{rank}(X)=\text{rank}(T)=m$ then it does not matter how we choose $S$ in \eqref{eq-yopt}, because by @cor-unique for all
+choices of $S$ we have $\text{tr}\ Y'XT=\|XT\|_\tau$, and all choices of $S$ give
 the same update and the same loss function value.
 
 In most factor analytic applications we have $n>>m$. The computations 
@@ -489,14 +489,14 @@ that we can rewrite the ALS algorithm in such a way that it only
 involves matrices of order $m$. This alternative derivation of
 the algorithm has the additional property that it can be
 applied to $C$ without having to know $X$, which has obvious
-advantages in secondary analysis. And factor analys publications have
-a lot of secondary analysis, using the mountain of correlation matrices 
+advantages in secondary analysis. And factor analysis method publications tend to have
+secondary analyses, using the mountain of correlation matrices 
 that have been published since 1900.
 
 ::: {#thm-als}
-Suppose $T^{(k)}$ has rank $m$. Then
+Suppose $T$ has rank $m$. Then the uodate is
 \begin{equation}
-T^{(k+1)}=\Pi_{\mathcal{T}}\{CT^{(k)}(T^{(k)}CT^{(k)})^{-1/2}\}.\label{eq-alsshort}
+T\leftarrow\Pi_{\mathcal{T}}\{CT(T'CT)^{-1/2}\}.\label{eq-alsshort}
 \end{equation}
 :::
 ::: {.proof}
@@ -505,21 +505,20 @@ We rewrite \eqref{eq-yopt} as
 Y=XT(T'CT)^{-1/2}+K_\perp^{\ } SL_\perp'
 \end{equation}
 where $(T'CT)^{-1/2}$ is the square root of the Moore-Penrose inverse of 
-$T'CT$, $K_\perp$ and $L_\perp$ are orthonormal bases for the null
+$T'CT$, $K_\perp$ and $L_\perp$ are orthonormal bases for the left and right null
 spaces of $XT$, and $S$ is arbitrary.
 \begin{equation}
-T^{(k+1)}=\Pi_{\mathcal{T}}(X'Y)=\Pi_{\mathcal{T}}\left\{CT^{(k)}(\{T^{(k)}\}'CT^{(k)})^{-\frac12}+X'K_\perp^{\ } SL_\perp'\right\}
+T\leftarrow\Pi_{\mathcal{T}}(X'Y)=\Pi_{\mathcal{T}}\left\{C(T'CT)^{-\frac12}+X'K_\perp^{\ } SL_\perp'\right\}
 \end{equation}
-We have $K_\perp'XT=0$. If $T$ has rank $m$ then this implies
+We have $K_\perp'XT=0$. If $T$ has rank $m$ then @cor-unique implies
 $X'K_\perp=0$ which leads to the result in the theorem.
 :::
 
-Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which means finding the $m$ largest eigenvalues and their corresponding eigenvectors. The update is then projected on the set $\mathcal{T}$ defined by the template. The ALS interpretation of the
+Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which means finding the $m$ non-zero eigenvalues and their corresponding eigenvectors. The update is then projected on the set $\mathcal{T}$. The ALS interpretation of the
 algorithm shows directly that a decreasing sequence of loss function values is produced, which
 proves convergence of $T$ under the usual identification and rank conditions.
 
-In Algorithm A we only compute the determinate part of $Y$, in Algorithm B there is no $Y$
-at all. In both cases finding appropiate (indeterminate) factor scores requires additional work, not unlike what must be done in the MINRES or ML techniques for CFA. 
+In Algorithm A we compute the determinate part of $Y$, and optionally after convergence a proper orthonormal $Y$. In Algorithm B there is no $Y$ at all, and if there is no $X$ we c annot compoute factor scores,  In both cases finding appropiate (indeterminate) factor scores $Y$ requires additional work, not unlike what must be done in the MINRES or ML techniques for CFA. One option is to simply compute the optimal $T$ and then use one of the various  classical methods to compute factor scores (@mcdonald_burr_67).
 
 ## Algorithm C
 
@@ -538,34 +537,41 @@ iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for given $
 
 Start the ALS cycle with minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying $F'F=I$ and $F'U=0$. Now $F'U=0$ if and only if $F=U_\perp V$,
 where $U_\perp$ is an $n\times(n-m)$ orthonormal basis for the complement of $U$ and $V$ is any $(n-m)\times q$ matrix. Thus we must maximize $\text{tr}\ V'U_\perp'XA$ over $V$ satisfying $V'V=I$. The optimum $V$ is the projection of $U_\perp'XA$
-on the set of orthonormal $(n-m)\times q$ matrices. We use the symbol $\leftarrow$
-for updates in iterations. Thus $Z\leftarrow f(Z)$ means "the new $Z$ becomes 
-function $f$ of the previous $Z$", which is the same thing as $Z^{(k+1)}=f(Z^{(k)})$,
-but without the reference to a specific iteration. We have
+on the set of orthonormal $(n-m)\times q$ matrices. We assume that $U_\perp'XA$ has rank $q$, so that the projection is unique. 
+
+We have
 \begin{subequations}
 \begin{equation}
 F\leftarrow U_\perp V=U_\perp^{\ } U_\perp'XA
 (A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}.\label{eq-fupdate}
 \end{equation}
+
+We do not want to compute with bases for null-spaces such as $U_\perp$, but we can use $U_\perp^{\ } U_\perp'=I-UU'$. Also define $\tilde D:=U'X$. Then
+\begin{equation}
+F\leftarrow(X-UD)A
+(A'(C-\tilde D'\tilde D)A)^{-1/2}.\label{eq-fupdatesimp}
+\end{equation}
 In the same way the optimum $U$ for given $(F,A,D)$ is
 \begin{equation}
-U\leftarrow F_\perp^{\ } F_\perp'XD
-(DX'F_\perp^{\ } F_\perp'XD)^{-1/2}.\label{eq-uupdate}
+U\leftarrow (X-F\tilde A)D
+(D(C-\tilde A\tilde A')D)^{-1/2},\label{eq-uupdate}
 \end{equation}
+where $\tilde A=X'F$.
+
 \end{subequations}
 In each ALS cycle we update in the order $(F,A,U,D)$. Thus
 \begin{equation}
-A\leftarrow\Pi_{\mathcal{A}}(X'F)=\Pi_{\mathcal{A}}(X'U_\perp^{\ } U_\perp'XA
-(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}).\label{eq-aupdate}
+A\leftarrow\Pi_{\mathcal{A}}(X'F)=\Pi_{\mathcal{A}}
+(C-\tilde D\tilde D')A
+(A'(C-\tilde D\tilde D')A)^{-1/2})
+.\label{eq-aupdate}
 \end{equation}
-Now use
-$U_\perp^{\ } U_\perp'=I-UU'$ and define $\tilde D:=X'U$,
-so that $D=\Pi_{\mathcal{D}}(\tilde D)$. Then \eqref{eq-aupdate} becomes
+Then \eqref{eq-aupdate} becomes
 \begin{subequations}
 \begin{equation}
 A\leftarrow \Pi_{\mathcal{A}}\left\{(C-\tilde D\tilde D')A[A'(C-\tilde D\tilde D')A]^{-1/2}\right\}.\label{eq-aupdate2}
 \end{equation}
-In the same way, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $\tilde A:=X'F$, gives the update
+In the same way, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $\tilde A:=F'X$, gives the update
 \begin{equation}
 D\leftarrow\Pi_{\mathcal{D}}(X'U)=\Pi_{\mathcal{D}}\left\{(C-\tilde A\tilde A')D
 [D(C-\tilde A\tilde A')D]^{-1/2}\right\}.\label{eq-dupdate}
@@ -575,6 +581,22 @@ D\leftarrow\Pi_{\mathcal{D}}(X'U)=\Pi_{\mathcal{D}}\left\{(C-\tilde A\tilde A')D
 Although \eqref{eq-aupdate2} and \eqref{eq-dupdate} show we can iterate in Algorithm C without having to compute
 $F_\perp$ and $U_\perp$ we still need $X$ to compute $\tilde A$ and $\tilde D$. Thus simplifications as in Algorithm B do not seem possible. This makes it unlikely that
 Algorithm C will actually be useful for CFA computations. 
+
+## Algorithm D
+
+Algorithm D is added mainly for reasons of curiosity. Instead of updating all of $Y for given $T$, as in 
+Algorithm A, or updating in CFA $F$ and $U$ separately, as in Algorithm C, we now propose Algorithm D, which
+updates $Y$ one column at the time. So we have $T$ and a tentative $Y$. We want to update column $j$
+of $Y$. Use $Y_{-j}$ for $Y$ without column $y_j$. Loss is used in the form
+$$
+\sigma(Y,T)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ Y'XT
+$$
+Define $Z:=XT$, and $n\times p$ matrix. We must maximize $y_j'z_j$ over $y_j'y_j=1$ and $y_j'Y_{-j}=0$.
+The optimal $y_j$ is proportional to $(I-Y_{-jY_{-j}'})z_j$. In Algorithm D we cycle once through
+all columns before updating $T$ again. 
+
+
+## Algorithm E
 
 The CFA definition \eqref{eq-cfa1}-\eqref{eq-cfa6} implies $A=X'F$ and 
 $D=X'U$. In an exploratory MDFA solution we do have
@@ -626,10 +648,10 @@ $$
 $$
 \sigma=\text{tr}{\ C}+\text{tr}\ A'A-2\ \text{tr}\ A'X'F-2\ \text{tr}\ D^2
 $$
-Suppose we have a current $F$ and $A=X'F$. Solve the MTFA problem of maximixizing $\text{tr}\ D^2$
+Suppose we have a current $F$ and $A=X'F$. Solve the MTFA problem of maximizing $\text{tr}\ D^2$
 over $D^2\lesssim C-AA'$. Note $C-AA'=X'F_\perp F_\perp'X\gtrsim 0$.
 
-## Algorithm G
+## Algorithm F
 
 The minimum of $\sigma(Y,T)$ over $Y'Y=I$ is
 \begin{align}
@@ -662,35 +684,23 @@ superlinear convergence of the BFGS method, but we lose some flexibility by not 
 the general projections $\Pi_{\mathcal{T}}()$ available.
 
 
-## Algorithm H
+## Algorithm G
 
-We can get slightly more generality by defining $\mathcal{T}$ as the set of matrices of the form
+In Algorithms A and B the projection $\Pi_{\mathcal{T}}()$ can be quite general. Algorithm $G$ uses the binary template $B$ to code fixed and variable elements, and projection is just elementwise multiplication with the
+template. We can get more generality by defining $\mathcal{T}$ as the set of matrices of the form
 \begin{equation}
 T=T_0+\sum_{s=1}^h\theta_s T_s,\label{eq-sumpar}
 \end{equation}
-which allows, for example, for patterns with some elements fixed to known values and some elements required to be equal to other elements. Fixed elements go into $T_0$ and the $T_s$ with $s>0$
+which allows for patterns with some elements fixed to known values but also allows some elements required to be equal to other elements. Fixed elements go into $T_0$ and the $T_s$ with $s>0$
 have zeroes where the fixed elements are. If the fixed
 elements are all fixed to zero, as they are in exploratory
-CFA, there is no need for a $T_0$.
+CFA, there is no need for a $T_0$. If \eqref{eq-sumpar} is combined with non-negativity restrictions on the
+$\theta_s$ then we can also incorporate inequality between the emlemnts of $T$, i.e. $\mathcal{T}$ can be a polyhedral convex cone.
 
 For the parametrization \eqref{eq-sumpar}
 \begin{equation}
 \mathcal{D}_s\sigma_\star(T)=\text{tr}\ T'T_s-\text{tr}\ (T'CT)^{-1/2}T'CT_s.
 \end{equation}
-If $T_s$ is a unit matrix of the form $e_je_g'$, i.e. $T_s$ only has the single non-zero element $(j,g)$ equal to one, then  
-\begin{equation}
-\mathcal{D}_s\sigma_\star(T)=t_{jg}-\{(T'CT)^{-1/2}T'C\}_{jg}.
-\end{equation}
-
-
-The definition of $\mathcal{T}$ that was used is
-$$
-T=T_0+\sum_{s=1}^q\theta_s T_s,
-$$
-which allows for patterns with some elements fixed and some elements equal to other elements.
-$$
-\mathcal{D}_s\sigma_\star=\text{tr}\ T'T_s-\text{tr}\ (T'CT)^{-1/2}T'CT_s
-$$
 
 The derivatives of the loss function ,,, with respect to the parameters $\theta_s$ are most easily expressed by first computing the derivatives of the eigenvalues of $T'CT$.
 \begin{equation}
@@ -701,7 +711,7 @@ where $Q_s:=T_s'CT+T'CT_s$. It follows that
 \mathcal{D}_{st}\lambda_\nu=-2x_\nu'Q_s(A-\lambda_\nu I)^+Q_tx_\nu+2x_\nu'T_s'CT_tx_\nu.\label{eq-mdfaddl}
 \end{equation}
 
-## Algorithm W
+## Algorithm H
 
 An MDFA procedure $X\rightarrow(Y,T)$ maps data matrices
 $X$ to a scores $Y$ and loadings $T$. The

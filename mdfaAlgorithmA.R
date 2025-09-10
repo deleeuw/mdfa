@@ -3,17 +3,18 @@ mdfaAlgorithmA <- function(x,
                            proj = mdfaCFAProjection,
                            itmax = 1000,
                            eps = 1e-10,
+                           ortho = FALSE,
                            verbose = TRUE) {
   m <- nrow(told)
-  svxa <- svd(x %*% told)
-  yold <- tcrossprod(svxa$u[, 1:m], svxa$v[, 1:m])
+  svxa <- svd(x %*% told, nu = m, nv = m)
+  yold <- tcrossprod(svxa$u, svxa$v)
   resi <- x - tcrossprod(yold, told)
   fold <- sum(resi^2)
   itel <- 1
   repeat {
     tnew <- proj(crossprod(x, yold))
-    svxa <- svd(x %*% tnew)
-    ynew <- tcrossprod(svxa$u[, 1:m], svxa$v[, 1:m])
+    svxa <- svd(x %*% tnew, nu = m, nv = m)
+    ynew <- tcrossprod(svxa$u, svxa$v)
     resi <- x - tcrossprod(ynew, tnew)
     fnew <- sum(resi^2)
     if (verbose) {
@@ -34,13 +35,15 @@ mdfaAlgorithmA <- function(x,
     yold <- ynew
     fold <- fnew
   }
-  return(
-    list(
-      ydet = ynew,
-      tmat = tnew,
-      loss = fnew,
-      itel = itel
-    ))
+  if (ortho) {
+    kperp <- leftNullSpace(x %*% tnew)
+    lperp <- leftNullSpace(t(x %*% tnew))
+    ynew <- ynew + tcrossprod(kperp[, 1:q], lperp)
+  }
+  return(list(
+    y = ynew,
+    t = tnew,
+    loss = fnew,
+    itel = itel
+  ))
 }
-
-

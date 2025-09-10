@@ -22,6 +22,16 @@ matrixPower <- function(x, p = 1 / 2) {
   return(evec %*% diag(epow) %*% t(evec))
 }
 
+leftNullSpace <- function(x) {
+  q <- qr(x)
+  indi <- if (q$rank == 0L) {
+    seq_len(ncol(x)) }
+  else {
+    -seq_len(q$rank)
+  }
+  return(qr.Q(q, complete = TRUE)[, indi, drop=FALSE])
+}
+
 mdfaConvertTtoAD <- function(tmat, rotate = TRUE) {
   q <- ncol(tmat) - nrow(tmat)
   loadings <- tmat[, 1:q]
