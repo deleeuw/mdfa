@@ -1,3 +1,7 @@
+library(RSpectra)
+source("mdfaAuxiliary.R")
+source("mdfaProjections.R")
+
 mdfaAlgorithmD <- function(x, yold, proj = mdfaCFAProjection, itmax = 1000, eps = 1e-10, verbose = TRUE) {
   told <- proj(crossprod(x, yold))
   zold <- x %*% told

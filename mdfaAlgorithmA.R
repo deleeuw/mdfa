@@ -1,3 +1,7 @@
+library(RSpectra)
+source("mdfaAuxiliary.R")
+source("mdfaProjections.R")
+
 mdfaAlgorithmA <- function(x,
                            told,
                            proj = mdfaCFAProjection,

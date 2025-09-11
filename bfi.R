@@ -8,7 +8,7 @@ p <- m + q
 bfi <- e1071::impute(bfi, "mean")
 bfi <- apply(bfi, 2, function(x) x - mean(x))
 bfi <- apply(bfi, 2, function(x) x / sqrt(sum(x ^ 2)))
-cfi <- cor(bfi)
+bfcor<- crossprod(bfi)
 ceig <- eigen(cfi)
 cvec <- ceig$vectors[, 1:q]
 cval <- diag(sqrt(ceig$values[1:q]))
