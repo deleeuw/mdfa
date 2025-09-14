@@ -40,4 +40,18 @@ mdfaGroupCFAProjection <- function(tmat, ngfac, groups) {
   tmat[, (ncomm + 1):(ncomm + m)] <- diag(diag(tmat[, (ncomm + 1):(ncomm + m)]))
   return(tmat)
 }
-mdfaGroupCFACorFacProjection <- function () {}
+
+mdfaGroupCFACorFacProjection <- function() {}
+
+projy <- function(x, rank) {
+  s <- svd(x, nu = rank, nv = rank)
+  return(tcrossprod(s$u, s$v))
+}
+
+proja <- function(x) {
+  return(x)
+}
+
+projd <- function(x) {
+  return(diag(diag(x)))
+}

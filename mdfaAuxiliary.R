@@ -44,11 +44,14 @@ mdfaConvertTtoAD <- function(tmat, rotate = TRUE) {
   return(list(loadings = loadings, uniquenesses = uniquenesses))
 }
 
-mdfaComputeYfromT <- function(x, tmat) {
-  m <- ncol(x)
-  n <- nrow(x)
-  xt <- x %*% tmat
-  et <- svd(xt)
-  ydet <- tcrossprod(et$u[, 1:m], et$v[, 1:m])
+mdfaCompleteY <- function(xmat, ymat, tmat) {
+  m <- ncol(xmat)
+  p <- ncol(ymat)
+  q <- p - m
+  hmat <- xmat %*% tmat
+  kperp <- leftNullSpace(hmat)
+  lperp <- leftNullSpace(t(hmat))
+  return(ymat + tcrossprod(kperp[, 1:q], lperp))
 }
+
 

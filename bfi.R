@@ -9,7 +9,7 @@ bfi <- e1071::impute(bfi, "mean")
 bfi <- apply(bfi, 2, function(x) x - mean(x))
 bfi <- apply(bfi, 2, function(x) x / sqrt(sum(x ^ 2)))
 bfcor<- crossprod(bfi)
-ceig <- eigen(cfi)
+ceig <- eigen(bfcor)
 cvec <- ceig$vectors[, 1:q]
 cval <- diag(sqrt(ceig$values[1:q]))
 bfaold <- cvec %*% cval

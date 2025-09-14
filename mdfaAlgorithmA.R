@@ -2,7 +2,7 @@ library(RSpectra)
 source("mdfaAuxiliary.R")
 source("mdfaProjections.R")
 
-mdfaAlgorithmA <- function(x,
+mdfaAlgorithmA <- function(xmat,
                            told,
                            proj = mdfaCFAProjection,
                            itmax = 1000,
@@ -10,16 +10,14 @@ mdfaAlgorithmA <- function(x,
                            ortho = FALSE,
                            verbose = TRUE) {
   m <- nrow(told)
-  svxa <- svd(x %*% told, nu = m, nv = m)
-  yold <- tcrossprod(svxa$u, svxa$v)
-  resi <- x - tcrossprod(yold, told)
+  yold <- projy(xmat %*% told, rank = m)
+  resi <- xmat - tcrossprod(yold, told)
   fold <- sum(resi^2)
   itel <- 1
   repeat {
-    tnew <- proj(crossprod(x, yold))
-    svxa <- svd(x %*% tnew, nu = m, nv = m)
-    ynew <- tcrossprod(svxa$u, svxa$v)
-    resi <- x - tcrossprod(ynew, tnew)
+    tnew <- proj(crossprod(xmat, yold))
+    ynew <- projy(xmat %*% tnew, rank = m)
+    resi <- xmat - tcrossprod(ynew, tnew)
     fnew <- sum(resi^2)
     if (verbose) {
       cat(
@@ -40,13 +38,11 @@ mdfaAlgorithmA <- function(x,
     fold <- fnew
   }
   if (ortho) {
-    kperp <- leftNullSpace(x %*% tnew)
-    lperp <- leftNullSpace(t(x %*% tnew))
-    ynew <- ynew + tcrossprod(kperp[, 1:q], lperp)
+    ynew <- mdfaCompleteY(xmat, ynew, tnew) 
   }
   return(list(
-    y = ynew,
-    t = tnew,
+    ymat = ynew,
+    tmat = tnew,
     loss = fnew,
     itel = itel
   ))

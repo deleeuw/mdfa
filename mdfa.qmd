@@ -75,14 +75,23 @@ appreciated, but is not required. The files can be found at
 # Introduction
 
 Suppose $X$ is an $n\times m$ "tall" data matrix ($n\geq m$). 
-We say that $X=YT'$, with $Y$
-an $n\times p$ matrix and $T$ an $m\times p$ matrix, is a 
-*decomposition of order* $p$ of $X$. Decompositions of various kinds play a key role in 
-multivariate data analysis, and in theoretical and numerical linear algebra (@stewart_98). 
 
-In this paper we are interested in the *factor analytic decomposition of order* $p$,
-which is characterized by $m\leq p\leq n$ and by the requirement $Y'Y=I$. In addition there may be constraints on $T$, which we write in the general form $T\in\mathcal{T}$, with $\mathcal{T}$ a subset of $\mathbb{R}^{m\times p}$, the space of all $m\times p$ matrices.
-Note that $Y$ is a "tall" matrix ($n\geq p$), while $T$ is "wide" ($m\leq p$).
+::: {#def-decomp}
+We say that $X=YT'$, with $Y$ an $n\times p$ matrix and $T$ an $m\times p$ matrix, is a 
+*decomposition of order* $p$ of $X$. 
+:::
+
+Decompositions of various kinds play a key role in 
+multivariate data analysis, as well as in theoretical and numerical linear algebra (@stewart_98). 
+Prime examples are the Singular Value Decomposition (SVD) $X=YT'$ with $Y$ and $T$ both orthogonal\footnote{A matrix $Y$ is *orthogonal* if $Y'Y$ is diagonal, an orthogonal matrix is *orthonormal* if $Y'Y=I$.}, the QR Decomposition $X=YT'$ with $Y$ orthonormal and $T$ lower-triangular, and the Polar
+Decomposition $X=YT'$ with $Y$ orthonormal and $T$ positive semi-definite.
+
+::: {#def-factanal}
+A decomposition $XT'$ of order $p$ of the $n\times m$ matrix $X$ is a *factor analytic decomposition of order* $p$, if $m<p<n$ and $Y'Y=I$. 
+:::
+
+Note that $Y$ is a "tall" matrix ($n\geq p$), while $T$ is "wide" ($m\leq p$). The order $p$ of the decomposition is consequently larger than the rank of the matrix $X$. In order to have a non-trivial
+data analysis technique we need constraints on $T$, which we write in the general form $T\in\mathcal{T}$, with $\mathcal{T}$ a subset of $\mathbb{R}^{m\times p}$, the space of all $m\times p$ matrices.
 
 Factor analysis techniques aim to find a solution of the system
 \begin{subequations}
@@ -93,9 +102,11 @@ T&\in\mathcal{T}.\label{eq-fa3}
 \end{align}
 \end{subequations}
 If no exact solution exists an approximate solution must be found.
+
 Mathematically this introduces the problem to find the conditions
 under which equations \eqref{eq-fa1}-\eqref{eq-fa3} can be solved for $Y$ and $T$, 
 and to describe the set of solutions if the system is solvable.
+
 Computationally the problem is to define what is meant by 
 "approximately" and to find a technique that produces such an
 approximate solution. Typically this is done by defining a
@@ -103,11 +114,16 @@ non-negative loss function that measures departure from perfect fit and
 an algorithm for minimizing it. 
 
 In *Common Factor Analysis (CFA)*, which is the most important special case of 
-factor analytic decomposition, the set $\mathcal{T}$ is the set of
-partitioned matrices $\begin{bmatrix}A&\mid&D\end{bmatrix}$. The
-matrix of *common factor loadings* $A$ is $m\times q$, with\footnote{The symbol $:=$ is used for definitions.} $q:=p-m$, and the matrix of *unique factor loadings* $D$ is diagonal of order $m$. In CFA parlance the diagonal elements of $D^2$ are called *uniquenesses*. In addition there can be constraints on $A$, which we write as $A\in\mathcal{A}$. If $A$ is unrestricted the CFA is *exploratory*, otherwise it is *confirmatory*. There is a corresponding partition of $Y$ as $\begin{bmatrix}F&\mid&U\end{bmatrix}$,
+factor analytic decomposition, the set $\mathcal{T}$ is a set of
+partitioned matrices $\begin{bmatrix}A&\mid&D\end{bmatrix}$, and there
+are separate constraints $A\in\mathcal{A}$ and $D\in\mathcal{D}$. The
+matrix of *common factor loadings* $A$ is $m\times q$, with\footnote{The symbol $:=$ is used for definitions.} $q:=p-m$, and the matrix of *unique factor loadings* $D$ is of order $m$. 
+There is a corresponding partition of $Y$ as $\begin{bmatrix}F&\mid&U\end{bmatrix}$,
 with $F$ the $n\times q$ matrix of *common factor scores* and $U$ the $n\times m$ matrix
 of *unique factor scores*. 
+
+If $A$ is unrestricted and $D$ is required to be diagonal then the CFA is *exploratory*, otherwise it is *confirmatory*. If $D$ is diagonal then the squares of its diagonal elements are called 
+*unique variances* or *uniquenesses*.
 
 For CFA the system \eqref{eq-fa1}-\eqref{eq-fa3} thus becomes
 \begin{subequations}
@@ -116,7 +132,7 @@ X&=FA'+UD,\label{eq-cfa1}\\
 F'F&=I,\label{eq-cfa2}\\
 U'U&=I,\label{eq-cfa3}\\
 F'U&=0,\label{eq-cfa4}\\
-D&=\text{diag(D)},\label{eq-cfa5}\\
+D&\in\mathcal{D},\label{eq-cfa5}\\
 A&\in\mathcal{A}.\label{eq-cfa6}
 \end{align}
 \end{subequations}
@@ -129,10 +145,75 @@ for the general case $X=YT$ with $T\in\mathcal{T}$.
 # The Fundamental Theorem
 
 In this section we look at finding exact solutions of the "full" system of equations
-\eqref{eq-fa1}-\eqref{eq-fa3}. This shows under what conditions we can expect
-perfect fit and a zero value for the minimum of our loss function. As we will see, 
+\eqref{eq-fa1}-\eqref{eq-fa3}. As we will see, 
 the basic solvability result, which we call the "Fundamental Theorem of Factor
 Analysis" following @kestelman_52, also has computational consequences.
+
+## Some Tools
+
+::: {#def-fatsvd}
+Suppose $X$ is an $n\times m$ "tall" matrix of rank $r$. A 
+"fat" SVD for X is the decomposition
+\begin{equation}
+X_{n\times m}=
+\begin{bmatrix}
+K&K_\perp
+\end{bmatrix}
+\begin{bmatrix}
+\Lambda&0\\
+0&0
+\end{bmatrix}
+\begin{bmatrix}
+L&L_\perp
+\end{bmatrix}'.\label{eq-fatx}
+\end{equation}
+with 
+
+* $\Lambda$ diagonal and positive definite of order $r$ with elements decreasing\footnote{Decreasing means $\lambda_1\geq\cdots\geq\lambda_r$} along the diagonal,
+* $K$ is $n\times r$ with $K'K=I$,
+* $L$ is $m\times r$ with $L'L=I$,
+* $K_\perp$ is $n\times (n - r)$ with $\smash{K_\perp'K_\perp}=I$,
+* $L_\perp$ is $m\times (m - r)$ with $\smash{L_\perp'L_\perp}=I$,
+* $K'K_\perp=0$,
+* $L'L_\perp=0$.
+:::
+
+::: {#rem-svdunique}
+In the "fat" SVD the diagonal matrix $\Lambda$ of *singular values* is uniquely defined.
+The matrices $K_\perp$ and $L_\perp$ have orthonormal bases for the left and the 
+right null-spaces of $X$, and are consequently only unique up to a rotation. The matrices of left and right *singular vectors*
+$K$ and $L$ have orthonormal bases for the column and row spaces of $X$, and are uniquely defined if and only if the singular values are all different.
+:::
+
+
+
+::: {#def-procrustes}
+Suppose $X$ is an $n\times m$ "tall" matrix. Suppose $\mathcal{Y}$ is the set of all $n\times m$ matrices with $Y'Y=I$. Then the *Procrustus Transformation* of $X$ is defined as
+$$
+\Pi_{\mathcal{Y}}(X):=\mathop{\text{argmin}}_{Y\in\mathcal{Y}}\ \text{SSQ}(X-Y)
+$$
+:::
+
+::: {#thm-procrustus}
+Suppose $X$ is an $n\times m$ "tall" matrix of rank $r$ with "fat" SVD
+given by \eqref{eq-fatx}.
+Then
+$$
+\Pi_{\mathcal{Y}}(X):=\{Y\mid Y=KL'+K_\perp^{\ }{} SL_\perp'\}
+$$ 
+with $S$ any $(n-r)\times(m-r)$ matrix satisfying $S'S=I$.
+::: 
+
+:::{#cor-procrustus}
+If $X$ is an $n\times m$ "tall" matrix of rank $r$ with "fat" SVD
+given by \eqref{eq-fatx} then
+$$
+\max_{Y\in\mathcal{Y}}\text{tr}\ Y'X=\text{tr}\ \Lambda,
+$$
+and the maximum is attained for any $Y\in\Pi_Y(X)$.
+:::
+
+## Fundamental Theorem
 
 We start by considering the "reduced" system, using $C:=X'X$,
 \begin{subequations}
@@ -148,15 +229,17 @@ Most factor analysis procedures are two-step methods. In the first step they fin
 an approximate solution $T$ to the reduced system, and then use this 
 $T$ to find an approximate solution $Y$ to the full system. The two steps may 
 actually use two different loss functions, the first one to assess 
-the fit of $C=TT'$ and the second one the fit of $X=YT'$. This practice is motivated, and to some extent justified, by the following theorem, first
-proved by @garnett_19.
+the fit of $C=TT'$ and the second one the fit of $X=YT'$. This practice is motivated, 
+and to some extent justified, by the following theorem, first proved by @garnett_19.
 
 ::: {#thm-fundamental}
 
-## Fundamental Theorem of Factor Analysis
 
 The *full* system \eqref{eq-fa1}-\eqref{eq-fa3} is solvable if and only if the *reduced* system \eqref{eq-pfa1}-\eqref{eq-pfa2} is solvable.
 :::
+
+
+
 ::: {.proof}
 Necessity is trivial. For sufficiency we have to prove that if $T$ is any solution of the
 reduced system then there is a $Y$ such that $(T,Y)$ satisfies the full system.
@@ -322,7 +405,7 @@ We complete the square, as in
 \sigma(Y,T)=
 \text{tr}\ C+\text{tr} (T-X'Y)'(T-X'Y)-\text{tr}\ Y'CY.
 \end{equation}
-Thus the optimum $T$ for given $Y$ is obtained by projecting 
+Thus the optimum $T$ for given $Y$ is obtained by projecting the $m\times p$ matrix
 $X'Y$ on the set of matrices $\mathcal{T}$. We shall use $\Pi_{\mathcal{T}}()$
 for the unweighted least squares projection on $\mathcal{T}$.
 
@@ -356,12 +439,13 @@ At the maximum $Z=YM$ implies $\text{tr}\ Y'Z=\text{tr}\ M=\|X\|_\tau$.
 Note that @lem-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $Z$ of rank $r$.
 
 ::: {#lem-construct}
-The $n\times p$ orthonormal $Y$ maximizes $\text{tr}\ Y'Z$, with 
+If the $n\times p$ matrix $Z$ with rank $r$ has the "fat" SVD
 \begin{equation}
 Z=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
 \begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-xa}
 \end{equation}
+then the $n\times p$ orthonormal $Y$ maximizes $\text{tr}\ Y'Z$
 if and only if
 \begin{equation}
 Y=KL'+K_\perp^{\ }SL_\perp',\label{eq-yopt}
@@ -377,7 +461,7 @@ Y=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}P&Q\\R&S\end{bmatrix}
 \begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-odecomp}
 \end{equation}
-where the four-block partitioned matrix in the middle of \eqref{eq-odecomp} must be orthonormal. Now $\text{tr}\ Y'X=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner\footnote{$A\lesssim B$ means $A-B$ positive semi-definite.} sense (because we must have
+where the four-block partitioned $n\times p$ matrix in the middle of \eqref{eq-odecomp} must be columnwise orthonormal. Now $\text{tr}\ Y'X=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner\footnote{$A\lesssim B$ means $A-B$ positive semi-definite.} sense (because we must have
 $P'P+R'R=I$). It follows that the diagonal elements of $P$ must be less than or equal to one, and thus the maximum of
 $\text{tr}\ Y'X$ is $\text{tr}\ \Lambda$, uniquely attained for $P=I$.
 But $P=I$ implies that at the maximum $R=0$ and $Q=0$, and $S$ is any
@@ -389,7 +473,7 @@ We can now apply the lemmas to minimizing the loss in \eqref{eq-sigmay}. This ge
 the fundamental theorem of factor analysis to the case of imperfect fit.
 
 ::: {#thm-procrustus}
-If the $n\times p$ matrix $XT$ has rank $m$ with $m<p<n$ and "fat" singular value decomposition
+If the $n\times p$ matrix $XT$ has rank $r$ with $r\leq m<p<n$ and "fat" singular value decomposition
 \begin{equation}
 XT=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
@@ -401,13 +485,13 @@ $\|XT\|_\tau$, attained for all $Y$ with
 Y=KL'+K_\perp SL_\perp',\label{eq-yoptt}
 \end{equation}
 where $S$ is any
-$(n-r)\times(p-r)$ matrix with $S'S=I$
+$(n-r)\times(p-r)$ matrix with $S'S=I$.
 :::
 ::: {.proof}
 Directly from @lem-construct.
 :::
 
-It is important to note that in MDFA we cannot use $Y=KL'$, because then $Y'Y=LL'$, which is of rank $r\leq m$ and thus not equal to the identity if $r<p$. Also note that formula \eqref{eq-yoptt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. The fundamental theorem merely adds that the optimal $Y$ makes loss equal to zero if $C=TT'$.
+It is important to see that in MDFA we cannot use $Y=KL'$, because then $Y'Y=LL'$, which is of rank $r\leq p$ and thus not equal to the identity if $r<p$. Also note that formula \eqref{eq-yoptt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. The fundamental theorem merely adds that the optimal $Y$ makes loss equal to zero if $C=TT'$.
 
 In factor analytic literature it is often said that the factor scores $Y$ have the
 "determinate" part $KL'$ and the "indeterminate" part $K_\perp SL_\perp'$. There
@@ -427,19 +511,17 @@ If $XT$ has rank $m$ and  $Y=KL'+K_\perp SL_\perp'$ then
 ::: {.proof}
 If $XT$ is of rank $m$ then both $X$ and $T$ are of rank $m$.
 We know that $K_\perp'XT=0$. Because $\text{rank}(T)=m$ this implies $X'K_\perp=0$.
-This proves part one.
-
-Because $\text{rank}(X)=m$ and $XTL_\perp=0$ we have $L_\perp'T=0$. This proves part 
-two. 
+This proves part one. Because $\text{rank}(X)=m$ and $XTL_\perp=0$ 
+we have $L_\perp'T=0$. This proves part two. 
 :::
 
 
-The CFA equations \eqref{eq-cfa1}-\eqref{eq-cfa6} imply that $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim C$. The second one in turn implies that $0\lesssim D^2\lesssim\text{diag}(C)$. In most CFA techniques it is possible that the estimated uniquenesses do not satisfy these inequality constraints
+The CFA equations \eqref{eq-cfa1}-\eqref{eq-cfa6} imply that $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim C$. The second one in turn implies that $0\lesssim D^2\lesssim\text{diag}(C)$. In most CFA techniques it is possible that the computed uniquenesses do not satisfy these inequality constraints
 and are consequently "improper" solutions. This is true for both MINRES and ML. We
 show that it is "less true" for MDFA.
 
 ::: {#thm-bounds}
-In the exploratory MDFA solution $0\lesssim AA'\lesssim C$ and 
+In the exploratory MDFA solution of CFA we have $0\lesssim AA'\lesssim C$ and 
 $0\lesssim D^2\lesssim\text{diag}(C)$.
 :::
 ::: {.proof}
@@ -455,15 +537,16 @@ do not happen in MDFA. Uniquenesses are always non-negative
 and bounded above by the diagonal of $C$, i.e. for correlation 
 matrices they are always between zero and one.
 Note however that we have not shown that $D^2\lesssim C$,
-so not all improper solutions are excluded. If $X'U$ is diagonal at the solution then indeed 
+so not all improper solutions are excluded. If it so happens 
+that $U'X$ is diagonal at the solution,
+which is certainly not guaranteed, then indeed 
 $D^2=X'UU'X\lesssim C$. 
 
 The repository has a file mdfaAlgorithmA.R, with the function mdfaAlgorithmA() implementing
-Algorithm A. There is an argument proj which is a function that takes care of the least squares projections on $\mathcal{T}$. By default proj is mdfaCFAProject(), which replaces the last $m$ columns of $T$ by its diagonal, but changing the default projection routine allows us to incorporate any set of constraints. 
+Algorithm A. There is an argument proj which is a function that takes care of the least squares projections on $\mathcal{T}$. By default proj is mdfaCFAProject(), which replaces the last $m$ columns of $T$ by its diagonal, but changing this default projection routine allows us to incorporate any set of constraints. 
 
 We emphasize that mdfaAlgorithmA() updates $Y$ using the determinate part $KL'$ only, which means that in our iterations (and at convergence) we do not have $Y'Y=I$. @cor-unique shows that if we were to complete $Y$ by
-adding $K_\perp SL_\perp'$ in each iteration we would get the same sequence of loss function values and the same
-sequence of $T$ values.
+adding $K_\perp SL_\perp'$ in each iteration we would get the same sequence of loss function values and the same sequence of $T$ values.
 
 It does mean however that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate part, but it remains true that this does not solve the original MDFA problem, which requires $Y'Y=I$. Also computing a proper $Y$ corresponding with the optimal $T$ forces us to make a choice of $S$ in \eqref{eq-yoptt}. In mdfaAlgorithmA() after convergence we optionally use the QR decompositon to compute an orthonormal bases $K_\perp$ of the left null space  and an orthonormal basis $L_\perp$ for the right null space of $XT$. We use a function identical to Null() from the package MASS (@venables_ripley_02). We choose the arbitrary $(n-m)\times(p-m)$ matrix $S$ by setting its first $p-m$ rows to the identity matrix, with the remaining rows zero.
 
@@ -498,12 +581,13 @@ that we can rewrite the ALS algorithm in such a way that it only
 involves matrices of order $m$. This alternative derivation of
 the algorithm has the additional property that it can be
 applied to $C$ without having to know $X$, which has obvious
-advantages in secondary analysis. And factor analysis method publications tend to have
-secondary analyses, using the mountain of correlation matrices 
+advantages in secondary analysis. And computational factor analysis 
+publications typically have
+secondary analyses examples, using the mountain of correlation matrices 
 that have been published since 1900.
 
 ::: {#thm-als}
-Suppose $T$ has rank $m$. Then the uodate is
+Suppose $T$ has rank $m$. Then the update is
 \begin{equation}
 T\leftarrow\Pi_{\mathcal{T}}\{CT(T'CT)^{-1/2}\}.\label{eq-alsshort}
 \end{equation}
@@ -530,23 +614,26 @@ proves convergence of $T$ under the usual identification and rank conditions.
 Since $\phi(T):=\|XT\|_\tau$ is convex and homogeneous in $T$
 the algorithm \eqref{eq-fixedp} is also a majorization (or MM) algorithm (@deleeuw_C_94c, @lange_16). To show this, 
 it follows from convexity that for all $T$ and $\overline T$ we have $\phi(T)\geq\text{tr}\ T'\overline G$, where $\overline G$ is any element of the subdifferential $\partial\phi(\overline T)$. Thus
-$$
-\sigma_\star(T)\leq\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ T'\overline G,
-$$
-with equality if $T=\overline T$. Since $\|XT\|_\tau=\max_{Y'Y=I}\text{tr}\ Y'XT$ it follows from the theorem about subgradients on linear transformations (@rockafellar_70, theorem 23.9) and the theorem about subgradients of supremum functions (@mordukhovich_nam_22, section 4.4) that
-$$
+\begin{equation}
+\sigma_\star(T)\leq\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ T'\overline G=\text{tr}\ C+\text{SSQ}(T-\overline G)+\text{SSQ}(\overline G),
+\end{equation}
+with equality if $T=\overline T$. Since $\|XT\|_\tau=\max_{Y'Y=I}\text{tr}\ Y'XT$ it follows from the theorem about subgradients of linear transformations (@rockafellar_70, theorem 23.9) and the theorem about subgradients of supremum functions (@mordukhovich_nam_22, section 4.4) that
+\begin{equation}
 \partial\phi(T)=X'(KL'+K_\perp \overline{\text{co}}(\mathcal{S})L_\perp')
-$$
+\end{equation}
 where $K$ and $L$ refer to the SVD of $XT$, where $\mathcal{S}$ is the Stiefel manifold of all $S$ with
 $S'S=I$, and where $\overline{\text{co}}()$ is the closed convex hull. Finally (@watson_92b, @gallivan_absil_10)
 $\overline{\text{co}}(\mathcal{S})$ is the compact convex set $\mathcal{H}$ of all matrices with largest singular value less than or equal to one. Thus
-$$
+\begin{equation}
 T\leftarrow\Pi_{\mathcal{T}}(\partial\phi(T))=\Pi_{\mathcal{T}}(X'(KL'+K_\perp HL_\perp')),
-$$
+\end{equation}
 with $H\in\mathcal{H}$ is a convergent MM algorithm. Since $\mathcal{H}$ is larger than $\mathcal{S}$
-this generalizes Algorithm B.
+this extends Algorithm B. On the other hand if $T$ has rank $m$ then
+$K_\perp'XT=0$ implies $X'K_\perp=0$, as in @cor-unique, and thus in that case the MM algorithm 
+iterates the determinate part $KL'$ and is identical to Algorithm B.
 
-In Algorithm A we compute the determinate part of $Y$, and optionally after convergence a proper orthonormal $Y$. In Algorithm B there is no $Y$ at all, and if there is no $X$ we c annot compoute factor scores,  In both cases finding appropiate (indeterminate) factor scores $Y$ requires additional work, not unlike what must be done in the MINRES or ML techniques for CFA. One option is to simply compute the optimal $T$ and then use one of the various classical methods to compute factor scores (@mcdonald_burr_67).
+
+In Algorithm A we compute the determinate part of $Y$, and optionally after convergence a proper orthonormal $Y$. In Algorithm B there is no $Y$ at all, and if there is no $X$ we cannot compute factor scores. In both cases finding appropiate (indeterminate) factor scores $Y$ requires additional work, not unlike what must be done in the MINRES or ML techniques for CFA. One option is to simply compute the optimal $T$ and then use one of the various classical methods to compute factor scores (@mcdonald_burr_67).
 
 ## Algorithm C
 
@@ -559,52 +646,25 @@ with the constraints $F'F=I$, $U'F=0$, $U'U=I$, $A\in\mathcal{A}$, and $D\in\mat
 Write $\Pi_{\mathcal{A}}()$ and $\Pi_{\mathcal{D}}()$ for the least squares projectors on $\mathcal{A}$ and
 $\mathcal{D}$. 
 
-In Algorithm A we use a two-block ALS strategy. We alternate the update of $Y=(F\mid U)$ for given $T=(A\mid D)$ and of $T=(A\mid D)$ for given $Y=(F\mid U)$. In Algorithm $C$ we use
+In Algorithm A we use a two-block ALS strategy. We alternate the update of $Y=(F\mid U)$ for given $T=(A\mid D)$ with the update of $T=(A\mid D)$ for given $Y=(F\mid U)$. In Algorithm $C$ we use
 a four-block ALS strategy. The four steps in an ALS
 iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for given $(F,A,D)$,  $A$ for given $(F, U, D)$, and $D$ for given $(A,F,U)$. The third and fourth step are the same as in Algorithm A, the first two steps are different.
 
-Start the ALS cycle with minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying $F'F=I$ and $F'U=0$. Now $F'U=0$ if and only if $F=U_\perp V$,
-where $U_\perp$ is an $n\times(n-m)$ orthonormal basis for the complement of $U$ and $V$ is any $(n-m)\times q$ matrix. Thus we must maximize $\text{tr}\ V'U_\perp'XA$ over $V$ satisfying $V'V=I$. The optimum $V$ is the projection of $U_\perp'XA$
-on the set of orthonormal $(n-m)\times q$ matrices. We assume that $U_\perp'XA$ has rank $q$, so that the projection is unique. 
+Start the ALS cycle with minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying the constraints. 
+The stationary equations are $XA=FM+UN$, with $M$ and $N$ matrices of Lagrange multipliers, with
+$M$ symmetric. Premultiplying by $U'$ gives $N=U'XA$ and thus $(I-UU')XA=FM$. Thus $F$ can be found from
+the SVD of $(I-UU')XA$. It is convenient to define $\tilde D:=U'X$, so that $(I-UU')XA=(X-U\tilde D)A$.
+In the same way we maximize $\text{tr}\ U'XD$ over $U$ satisfying $U'U=I$ and $U'F=0$. This
+leads to generalized Procrustus for $XD=FM+UN$ $M=F'XD$ $XD-FF'XD=(I-FF')XD=(X-F\tilde A')D$.
 
-We have
-\begin{subequations}
-\begin{equation}
-F\leftarrow U_\perp V=U_\perp^{\ } U_\perp'XA
-(A'X'U_\perp^{\ } U_\perp'XA)^{-1/2}.\label{eq-fupdate}
-\end{equation}
+Clearly Algorithm C produced a decreasing sequence of loss function values, bounded below by zero,
+which consequently converges. Moreover solutions for $(F, A, U, D)$ are in a compact set, and the
+updates are continuous functions. Thus solution sequences have subsequences converging to
+stationary points. But there is a problem. 
 
-We do not want to compute with bases for null-spaces such as $U_\perp$, but we can use $U_\perp^{\ } U_\perp'=I-UU'$. Also define $\tilde D:=U'X$. Then
-\begin{equation}
-F\leftarrow(X-UD)A
-(A'(C-\tilde D'\tilde D)A)^{-1/2}.\label{eq-fupdatesimp}
-\end{equation}
-In the same way the optimum $U$ for given $(F,A,D)$ is
-\begin{equation}
-U\leftarrow (X-F\tilde A)D
-(D(C-\tilde A\tilde A')D)^{-1/2},\label{eq-uupdate}
-\end{equation}
-where $\tilde A=X'F$.
 
-\end{subequations}
-In each ALS cycle we update in the order $(F,A,U,D)$. Thus
-\begin{equation}
-A\leftarrow\Pi_{\mathcal{A}}(X'F)=\Pi_{\mathcal{A}}
-(C-\tilde D\tilde D')A
-(A'(C-\tilde D\tilde D')A)^{-1/2})
-.\label{eq-aupdate}
-\end{equation}
-Then \eqref{eq-aupdate} becomes
-\begin{subequations}
-\begin{equation}
-A\leftarrow \Pi_{\mathcal{A}}\left\{(C-\tilde D\tilde D')A[A'(C-\tilde D\tilde D')A]^{-1/2}\right\}.\label{eq-aupdate2}
-\end{equation}
-In the same way, using  $F_\perp^{\ } F_\perp'=I-FF'$ and $\tilde A:=F'X$, gives the update
-\begin{equation}
-D\leftarrow\Pi_{\mathcal{D}}(X'U)=\Pi_{\mathcal{D}}\left\{(C-\tilde A\tilde A')D
-[D(C-\tilde A\tilde A')D]^{-1/2}\right\}.\label{eq-dupdate}
-\end{equation}
-\end{subequations}
+
+
 
 Although \eqref{eq-aupdate2} and \eqref{eq-dupdate} show we can iterate in Algorithm C without having to compute $F_\perp$ and $U_\perp$ we still need $X$ to compute $\tilde A$ and $\tilde D$. Thus simplifications as in Algorithm B, which allow us to iterate without using $X$,  do not seem possible. 
 
