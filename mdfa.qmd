@@ -53,13 +53,13 @@ source("mdfaAlgorithmB.R")
 source("mdfaAlgorithmG.R")
 source("mdfaAlgorithmW.R")
 source("lsfa.R")
-source("cylinder.R")
-source("emmett.R")
-source("maxwell.R")
-source("cattell.R")
-source("macdonell.R")
-source("tucker.R")
-source("bfi.R")
+source("data/cylinder.R")
+source("data/emmett.R")
+source("data/maxwell.R")
+source("data/cattell.R")
+source("data/macdonell.R")
+source("data/tucker.R")
+source("data/bfi.R")
 ```
 
 \sectionbreak
@@ -636,7 +636,7 @@ In Algorithm A we compute the determinate part of $Y$, and optionally after conv
 
 
 
-## Algorithm F
+## Algorithm C
 
 The minimum of $\sigma(Y,T)$ over $Y'Y=I$ is
 \begin{align}
