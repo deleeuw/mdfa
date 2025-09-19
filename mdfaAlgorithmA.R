@@ -7,7 +7,7 @@ mdfaAlgorithmA <- function(xmat,
                            proj = mdfaCFAProjection,
                            itmax = 1000,
                            eps = 1e-10,
-                           ortho = FALSE,
+                           ortho = TRUE,
                            verbose = TRUE) {
   m <- nrow(told)
   yold <- projy(xmat %*% told, rank = m)

@@ -1,0 +1,115 @@
+---
+title: "algcd"
+author: "Jan de Leeuw"
+format: pdf
+---
+
+## Algorithm C
+
+In @deleeuw_C_04a an alternative ALS algorithm for CFA
+is mentioned and briefly described. Like Algorithm A it minimizes the CFA loss
+\begin{equation}
+\sigma(F,A,U,D)=\text{SSQ}(X-FA'-UD),\label{eq-cfaloss}
+\end{equation}
+with the constraints $F'F=I$, $U'F=0$, $U'U=I$, $A\in\mathcal{A}$, and $D\in\mathcal{D}$.
+Write $\Pi_{\mathcal{A}}()$ and $\Pi_{\mathcal{D}}()$ for the unweighted least squares projectors on $\mathcal{A}$ and $\mathcal{D}$. 
+
+In Algorithm A we use a two-block ALS strategy. We alternate the update of $Y=(F\mid U)$ for given $T=(A\mid D)$ with the update of $T=(A\mid D)$ for given $Y=(F\mid U)$. In Algorithm $C$ we use a four-block ALS strategy. The four steps in an ALS
+iteration of Algorithm C are updating $F$ for given $(A, U, D)$, $U$ for given $(F,A,D)$,  $A$ for given $(F, U, D)$, and $D$ for given $(A,F,U)$. The third and fourth step are the same as in Algorithm A, the first two steps are different.
+
+Start the ALS cycle with minimizing $\sigma()$ over $F$ for given $(A, U, D)$ with the constraints $F'F=I$ and $F'U=0$. This is equivalent to maximizing $\text{tr}\ F'XA$ over $F$ satisfying the constraints. 
+The stationary equations are $XA=FM+UN$, with $M$ and $N$ matrices of Lagrange multipliers, and with $M$ symmetric. Premultiplying by $U'$ gives $N=U'XA$ and thus $(I-UU')XA=FM$, which implies $F\leftarrow\Pi_\mathcal{Y}((I-UU')XA)$. It is convenient to define $\tilde D:=U'X$, so that $(I-UU')XA=(X-U\tilde D)A$.
+In the same way we maximize $\text{tr}\ U'XD$ over $U$ satisfying $U'U=I$ and $U'F=0$. This leads to $U\leftarrow\Pi_{\mathcal{Y}}((X-F\tilde A')D)$, where $\tilde A:=X'F$.
+
+\begin{align}
+F\leftarrow(I-UU')XA(A'X'(I-UU')XA)^{-1/2},\\
+A\leftarrow X'F=X'(I-UU')XA(A'X'(I-UU')XA)^{-1/2},\\
+U\leftarrow(I-FF')XD(DA'X'(I-FF')XAD)^{-1/2},\\
+D\leftarrow \text{diag}(X'U)=X'(I-FF')XD(DA'X'(I-FF')XAD)^{-1/2}
+\end{align}
+
+Clearly Algorithm C produced a decreasing sequence of loss function values, bounded below by zero, which consequently converges. Moreover solutions for $(F, A, U, D)$ are in a compact set, and the update functions are continuouss. Thus solution sequences have subsequences converging to stationary points. But stationary points of Algorithm C will generally not be stationary points of Algorithms A and B. And it is an important cautionary tale that iterative algorithms want to find fixed or stationary points of the algorithm, which are not
+necessarily the same as stationary points of the loss function.
+
+
+
+
+
+
+
+
+
+Although \eqref{eq-aupdate2} and \eqref{eq-dupdate} show we can iterate in Algorithm C without having to compute $F_\perp$ and $U_\perp$ we still need $X$ to compute $\tilde A$ and $\tilde D$. Thus simplifications as in Algorithm B, which allow us to iterate without using $X$,  do not seem possible. 
+
+
+## Algorithm D
+
+Algorithm D is added mainly for reasons of curiosity. Instead of updating all of $Y$ for given $T$, as in 
+Algorithm A, or updating in CFA parts $F$ and $U$ separately, as in Algorithm C, we now propose Algorithm D, which
+updates $Y$ one column at the time. So we have $T$ and a tentative $Y$. We want to update column $j$
+of $Y$. Use $Y_{-j}$ for $Y$ without column $y_j$. Loss is used in the form
+$$
+\sigma(Y,T)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ Y'XT
+$$
+Define $Z:=XT$, and $n\times p$ matrix. We must maximize $y_j'z_j$ over $y_j'y_j=1$ and $y_j'Y_{-j}=0$.
+The optimal $y_j$ is proportional to $(I-Y_{-j}Y_{-j}')z_j$. In Algorithm D we cycle once through
+all columns, in order, before updating $T$ again. 
+
+Algorithm D needs an initial orthonormal estimate of $Y$ and it maintains orthonormality throughout,
+like Algorithm C and unlike Algorithms A and B.
+
+## Algorithm E
+
+The CFA definition \eqref{eq-cfa1}-\eqref{eq-cfa6} implies $A=X'F$ and 
+$D=X'U$. In an exploratory MDFA solution we do have
+$A=X'F$ but $D=\text{diag}(X'U)$. As a consequence
+unique factor $u_i$ in the solution can be correlated
+with variables $x_j$, where $j\neq i$. This violates 
+the very idea of unique factors. We may conclude that a non-diagonal $X'U$
+indicates a lack of CFA fit. 
+We may also find it sufficiently counter-intuitive and prevent 
+it from happening.
+
+In the thesis of Socan an ALS variation of MDFA is discussed in which it is required, in addition to $Y'Y=I$, that $U'X$ is diagonal. What we call Algorithm A is called the "DS method", the ALS method which requires that $U'X$ is diagonal is called the "DC method". We have already seen that at a solution of the DC method we have $D^2\lesssim C$, and thus
+there are no improper solutions. In the DS method in case of perfect fit the constraint $U'X=D$ is automatically satisfied, but it will not be so for the least squares fit. 
+
+Algorithm E we also require that $U'X=\Omega$, with $\Omega$
+a diagonal matrix with additional unknowns, we can update $A$, $D$, and $F$ as before.
+But for $U$ and $\Omega$ we have to solve maximizing $\text{tr}\ U'XD$ over $U$ and $\Omega$
+such that $U'F=0$, $U'U=I$, and $U'X=\Omega$. We satisfy $U'F=0$ and $U'U=I$ by
+choosing $U=F_\perp V$ with $V'V=I$. It remains to maximize $\text{tr}\ V'F_\perp'XD$
+over $V$ with $V'F_\perp'X=\Omega$ and $V'V=I$. 
+
+Assume $F_\perp'X$ has rank $m$. Then the general solution of $V'F_\perp'X=\Omega$
+is
+$$
+V=F_\perp' X(X'F_\perp F_\perp' X)^{-1}\Omega+HM.
+$$
+with $H$ a basis for the null space of $F_\perp'X$ and with $M$ arbitrary. For this $V$
+we must have
+$$
+V'V=\Omega(X'F_\perp F_\perp' X)^{-1}\Omega+M'M=I
+$$
+which is solvable if and only if $\Omega$ satisfies $\Omega(X'F_\perp F_\perp' X)^{-1}\Omega\lesssim I$, or, $\Omega^2\lesssim C-\tilde A\tilde A'$. Thus 
+our problem becomes maximizing $\text{tr}\ \Omega D$ under these constraints.
+This problem, although convex, is not a simple least squares projection
+problem, and we currently have no implementation.
+
+Maximize $\text{tr}\ D^2$ over $V'F_\perp'X=D$ and $V'V=I$. Maximize $\text{tr}\ V'F_\perp'XX'F_\perp V$ over $V'V=I$. $F_\perp$ is $n\times (n-q)$, $V$ is $(n-q)\times m$. Now $F_\perp'X$ has rank $m$ iff
+$X'F_\perp'F_\perp X=(C-\tilde A\tilde A')$has rank $m$. In that case
+$$
+V=F_\perp' X(X'F_\perp F_\perp' X)^{-1}D+HM.
+$$
+and
+$$
+V'V=D(X'F_\perp F_\perp' X)^{-1}D+M'M=I
+$$
+$$
+D^2\lesssim C-AA'
+$$
+$$
+\sigma=\text{tr}{\ C}+\text{tr}\ A'A-2\ \text{tr}\ A'X'F-2\ \text{tr}\ D^2
+$$
+Suppose we have a current $F$ and $A=X'F$. Solve the MTFA problem of maximizing $\text{tr}\ D^2$
+over $D^2\lesssim C-AA'$. Note $C-AA'=X'F_\perp F_\perp'X\gtrsim 0$.
+

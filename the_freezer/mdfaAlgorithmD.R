@@ -3,20 +3,24 @@ source("mdfaAuxiliary.R")
 source("mdfaProjections.R")
 
 mdfaAlgorithmD <- function(xmat,
-                           yold,
+                           told,
                            proj = mdfaCFAProjection,
                            itmax = 1000,
                            eps = 1e-10,
                            verbose = TRUE) {
-  told <- proj(crossprod(xmat, yold))
-  zold <- xmat %*% told
   itel <- 1
   m <- ncol(xmat)
+  p <- ncol(told)
+  q <- m - p
+  n <- nrow(xmat)
+  zold <- xmat %*% told
+  yold <- projy(zold, rank = m)
+  yold <- mdfaCompleteY(xmat, yold, told)
   resi <- xmat - tcrossprod(yold, told)
   fold <- sum(resi^2)
   repeat {
     ynew <- yold
-    for (j in 1:m) {
+    for (j in 1:p) {
       zolj <- zold[, j]
       ynew[, j] <- 0
       yaux <- zolj - ynew %*% drop(zolj %*% ynew)
