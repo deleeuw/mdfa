@@ -8,7 +8,7 @@ mdfaAlgorithmA <- function(xmat,
                            itmax = 1000,
                            eps = 1e-10,
                            ortho = TRUE,
-                           verbose = TRUE) {
+                           verbose = FALSE) {
   m <- nrow(told)
   yold <- projy(xmat %*% told, rank = m)
   resi <- xmat - tcrossprod(yold, told)
