@@ -562,6 +562,13 @@ For OCFA \eqref{eq-minres} becomes
 An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function \eqref{eq-minrescfa} over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course ULS only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa}
 are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_69 and @joreskog_vanthillo_71.
 
+## GLS
+
+$$
+\sigma(T):=\text{tr}\ C^{-1}(C-TT')C^{-1}(C-TT')
+$$
+majorization, through ULS.
+
 ## MLS
 
 Also for OCFA @young_40 and @whittle_52 propose minimizing the weighted least 
