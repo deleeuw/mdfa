@@ -38,7 +38,7 @@ papersize: letter
 graphics: true
 link-citations: true
 mainfont: Times New Roman
-abstract: TBD
+abstract: We discuss definitions, equations, algorithms, and software for various forms of least squares factor analysis, and in particular for matrix decomposition factor analysis.
 ---
 
 ```{r loadpackages, echo = FALSE}
@@ -64,68 +64,39 @@ source("data/bfi.R")
 
 \sectionbreak
 
-**Note:** This is a working manuscript which will be expanded/updated
-frequently. All suggestions for improvement are welcome. All qmd, tex,
-html, pdf, R, and C files are in the public domain. Attribution will be
-appreciated, but is not required. The files can be found at
-<https://www.github.com/deleeuw/mdfa> 
+**Note:** This is a working manuscript which will be expanded/updated frequently. All suggestions for improvement are welcome. All qmd, tex, html, pdf, R, and C files are in the public domain. Attribution will be appreciated, but is not required. The files can be found at <https://www.github.com/deleeuw/mdfa>
 
 \sectionbreak
 
 # Introduction
 
-Suppose $X$ is an $n\times m$ "tall" data matrix ($n\geq m$). 
+Suppose $X$ is an $n\times m$ "tall" data matrix ($n\geq m$).
 
 ::: {#def-decomp}
-We say that $X=YT'$, with $Y$ an $n\times p$ matrix and $T$ an $m\times p$ matrix, is a 
-*factorization of order* $p$ of $X$. 
+We say that $X=YT'$, with $Y$ an $n\times p$ matrix and $T$ an $m\times p$ matrix, is a *decomposition of order* $p$ of $X$.
 :::
 
-Factorizations, also known as decompositions, of various kinds play a key role in 
-multivariate data analysis, as well as in theoretical and numerical linear algebra (@stewart_98). 
-Prime examples are the Singular Value Decomposition (SVD) $X=YT'$ with $Y$ and $T$ both orthogonal\footnote{A matrix $Y$ is *orthogonal* if $Y'Y$ is diagonal, an orthogonal matrix is *orthonormal* if $Y'Y=I$.}, the QR Decomposition $X=YT'$ with $Y$ orthonormal and $T$ lower-triangular, and the Polar
-Decomposition $X=YT'$ with $Y$ orthonormal and $T$ positive semi-definite.
+Decompositions of various kinds play a key role in multivariate data analysis, as well as in theoretical and numerical linear algebra (@stewart_98). Prime examples are the *Singular Value Decomposition (SVD)* $X=YT'$ with $Y$ and $T$ both orthogonal\footnote{A matrix $Y$ is orthogonal if $Y'Y$ is diagonal, an orthogonal matrix is orthonormal if $Y'Y=I$.}, the *QR Decomposition* $X=YT'$ with $Y$ orthonormal and $T$ lower-triangular, and the *Polar Decomposition* $X=YT'$ with $Y$ orthonormal and $T$ positive semi-definite.
 
 ::: {#def-factanal}
-A factorization $XT'$ of order $p$ of the $n\times m$ matrix $X$ is an *orthogonal factor analytic (OFA) factorization of order* $p$, if $m<p<n$ and $Y'Y=I$. 
+A decomposition $YT'$ of order $p$ of the $n\times m$ matrix $X$ is an *factor analytic decomposition of order* $p$, if $m<p<n$.
 :::
 
-Note that $Y$ is a "tall" matrix ($n\geq p$), while $T$ is "wide" ($m\leq p$). The order $p$ of the decomposition is consequently larger than the rank of the matrix $X$. In order to have a non-trivial data analysis technique we need constraints on $T$, which we write in the general form $T\in\mathcal{T}$, with $\mathcal{T}$ a subset of $\mathbb{R}^{m\times p}$, the space of all $m\times p$ matrices.
+Note that $Y$ is a "tall" matrix ($n\geq p$), while $T$ is "wide" ($m\leq p$). The order $p$ of the decomposition is consequently larger than the rank of the matrix $X$. In order to have a non-trivial data analysis technique we need constraints on $T$ and $Y$, which we write in the general form $T\in\mathcal{T}$ and $Y\in\mathcal{Y}$, with $\mathcal{T}$ a subset of $\mathbb{R}^{m\times p}$, the space of all $m\times p$ matrices, and $\mathcal{Y}$ a subset of $\mathbb{R}^{n\times p}$, the space of all $n\times p$ matrices
 
-OFA techniques aim to find a solution of the system
-\begin{subequations}
+Factor analysis techniques aim to find a solution of the system \begin{subequations}
 \begin{align}
 X&=YT',\label{eq-fa1}\\
-Y'Y&=I,\label{eq-fa2}\\
+Y&\in\mathcal{Y},\label{eq-fa2}\\
 T&\in\mathcal{T}.\label{eq-fa3}
 \end{align}
-\end{subequations}
-If no exact solution exists an approximate solution must be found.
+\end{subequations} If no exact solution exists an approximate solution must be found.
 
-Mathematically this introduces the problem to find the conditions
-under which equations \eqref{eq-fa1}-\eqref{eq-fa3} can be solved for $Y$ and $T$, 
-and to describe the set of solutions if the system is solvable.
+Mathematically this introduces the problem to find the conditions under which equations \eqref{eq-fa1}-\eqref{eq-fa3} can be solved for $Y$ and $T$, and to describe the set of solutions if the system is solvable. Computationally the problem is to define what is meant by "approximately" and to find a technique that produces such an approximate solution. Typically this is done by defining a non-negative loss function that measures departure from perfect fit and an algorithm for minimizing it.
 
-Computationally the problem is to define what is meant by 
-"approximately" and to find a technique that produces such an
-approximate solution. Typically this is done by defining a
-non-negative loss function that measures departure from perfect fit and
-an algorithm for minimizing it. 
+In *Orthogonal Common Factor Analysis*, which is the most important special case of factor analysis, the set $\mathcal{T}$ is a set of partitioned matrices $\begin{bmatrix}A&\mid&D\end{bmatrix}$, and there are separate constraints $A\in\mathcal{A}$ and $D\in\mathcal{D}$. The matrix of *common factor loadings* $A$ is $m\times q$, with\footnote{The symbol $:=$ is used for definitions.} $q:=p-m$, and the matrix of *unique factor loadings* $D$ is of order $m$. The set $\mathcal{Y}$ are the orthonormal $n\times p$ matrices $Y$ with $Y'Y=I$. There is a corresponding partition of $Y$ as $\begin{bmatrix}F&\mid&U\end{bmatrix}$, with $F$ the $n\times q$ matrix of *common factor scores* and $U$ the $n\times m$ matrix of *unique factor scores*. If $A$ is unrestricted and $D$ is required to be diagonal then the factor analysis is *exploratory*, otherwise it is *confirmatory*. If $D$ is diagonal then the squares of its diagonal elements are called *unique variances* or *uniquenesses*.
 
-In *Orthogonal Common Factor Analysis (OCFA)*, which is the most important special case of 
-OFA, the set $\mathcal{T}$ is a set of
-partitioned matrices $\begin{bmatrix}A&\mid&D\end{bmatrix}$, and there
-are separate constraints $A\in\mathcal{A}$ and $D\in\mathcal{D}$. The
-matrix of *common factor loadings* $A$ is $m\times q$, with\footnote{The symbol $:=$ is used for definitions.} $q:=p-m$, and the matrix of *unique factor loadings* $D$ is of order $m$. 
-There is a corresponding partition of $Y$ as $\begin{bmatrix}F&\mid&U\end{bmatrix}$,
-with $F$ the $n\times q$ matrix of *common factor scores* and $U$ the $n\times m$ matrix
-of *unique factor scores*. 
-
-If $A$ is unrestricted and $D$ is required to be diagonal then the OCFA is *exploratory*, otherwise it is *confirmatory*. If $D$ is diagonal then the squares of its diagonal elements are called 
-*unique variances* or *uniquenesses*.
-
-For OCFA the system \eqref{eq-fa1}-\eqref{eq-fa3} thus becomes
-\begin{subequations}
+For orthogonal common factor analysis the system \eqref{eq-fa1}-\eqref{eq-fa3} thus becomes \begin{subequations}
 \begin{align}
 X&=FA'+UD,\label{eq-cfa1}\\
 F'F&=I,\label{eq-cfa2}\\
@@ -136,16 +107,14 @@ A&\in\mathcal{A}.\label{eq-cfa6}
 \end{align}
 \end{subequations}
 
-Although OCFA will always be in the back of our mind, we will develop equations and algorithms
-for the general OFA case $X=YT$ with $T\in\mathcal{T}$.
+Although common factor analysis will always be in the back of our mind, we will develop equations and algorithms for the general orthognal case $X=YT$ with $Y'Y=I$ and $T\in\mathcal{T}$.
 
+# Some Tools
 
-## Some Tools
+In this section we describe some of the tools fromn linear algebra that we use in this paper. Our basic tool, which we use to define the others, is the Singular Value Decomposition or SVD. See @stewart_73 for an excellent overview of the history of the SVD.
 
 ::: {#def-fatsvd}
-Suppose $X$ is an $n\times m$ "tall" matrix of rank $r$. A 
-"fat" SVD for X is any decomposition
-\begin{equation}
+Suppose $X$ is an $n\times m$ "tall" matrix of rank $r$. A "fat" SVD for X is any decomposition \begin{equation}
 X=
 \begin{bmatrix}
 K&K_\perp
@@ -157,38 +126,36 @@ K&K_\perp
 \begin{bmatrix}
 L'&L_\perp'
 \end{bmatrix}.\label{eq-fatx}
-\end{equation}
-with 
+\end{equation} with
 
-* $\Lambda$ diagonal and positive definite of order $r$ with elements decreasing\footnote{Decreasing means $\lambda_1\geq\cdots\geq\lambda_r$} along the diagonal,
-* $K$ is $n\times r$ with $K'K=I$,
-* $L$ is $m\times r$ with $L'L=I$,
-* $K_\perp$ is $n\times (n - r)$ with $\smash{K_\perp'K_\perp}=I$,
-* $L_\perp$ is $m\times (m - r)$ with $\smash{L_\perp'L_\perp}=I$,
-* $K'K_\perp=0$,
-* $L'L_\perp=0$.
+-   $\Lambda$ diagonal and positive definite of order $r$ with elements decreasing\footnote{Decreasing means $\lambda_1\geq\cdots\geq\lambda_r$} along the diagonal,
+-   $K$ is $n\times r$ with $K'K=I$,
+-   $L$ is $m\times r$ with $L'L=I$,
+-   $K_\perp$ is $n\times (n - r)$ with $\smash{K_\perp'K_\perp}=I$,
+-   $L_\perp$ is $m\times (m - r)$ with $\smash{L_\perp'L_\perp}=I$,
+-   $K'K_\perp=0$,
+-   $L'L_\perp=0$.
 :::
 
 ::: {#rem-svdunique}
-In the "fat" SVD the diagonal matrix $\Lambda$ of *singular values* is uniquely defined.
-The matrices $K_\perp$ and $L_\perp$ have orthonormal bases for the left and the 
-right null-spaces of $X$, and are consequently only unique up to a rotation. The matrices of left and right *singular vectors*
-$K$ and $L$ have orthonormal bases for the column and row spaces of $X$, and are uniquely defined if and only if the singular values are all different.
+In the "fat" SVD the diagonal matrix $\Lambda$ of *singular values* is uniquely defined. The matrices $K_\perp$ and $L_\perp$ have orthonormal bases for the left and the right null-spaces of $X$, and are consequently only unique up to a rotation. The matrices of left and right *singular vectors* $K$ and $L$ have orthonormal bases for the column and row spaces of $X$, and are uniquely defined if and only if the singular values are all different.
+:::
+
+::: {#rem-svdlean}
+The "lean" SVD is $X=K\Lambda L'$, so it does not include the bases for the null spaces.
 :::
 
 ::: {#def-mpinverse}
-The Moore-Penrose Inverse of an $n\times m$ matrix $X$ is any $m\times n$ matrix $X^+$ satisfying
-the four Penrose conditions
+The Moore-Penrose Inverse of an $n\times m$ matrix $X$ is any $m\times n$ matrix $X^+$ satisfying the four Penrose conditions
 
-1. $XX^{+}$ is symmetric,
-2. $X^{+} X$ is symmetric,
-3. $X^{+} XX^{+} = X^{+}$,
-4. $XX^{+} X=X$.
+1.  $XX^{+}$ is symmetric,
+2.  $X^{+} X$ is symmetric,
+3.  $X^{+} XX^{+} = X^{+}$,
+4.  $XX^{+} X=X$.
 :::
 
 ::: {#thm-mpinverse}
-If $X$ has "fat" SVD given by \eqref{eq-fatx} then $Y=X^+$ if and only if
-\begin{equation}
+If $X$ has "fat" SVD given by \eqref{eq-fatx} then $Y=X^+$ if and only if \begin{equation}
 Y=
 \begin{bmatrix}
 L&L_\perp
@@ -203,11 +170,8 @@ K'\\K_\perp'
 \end{equation}
 :::
 
-::: {.proof}
-To prove sufficiency we merely have to verify that $Y$ from \eqref{eq-fatmp} satisfies the
-four Penrose conditions. Necessity (and uniqueness) is a bit more involved.
-Any $m\times n$ matrix $Y$ can be written as
-\begin{equation}
+::: proof
+To prove sufficiency we merely have to verify that $Y$ from \eqref{eq-fatmp} satisfies the four Penrose conditions. Necessity (and uniqueness) is a bit more involved. Any $m\times n$ matrix $Y$ can be written as \begin{equation}
 Y=
 \begin{bmatrix}
 L&L_\perp
@@ -219,9 +183,7 @@ R&S
 \begin{bmatrix}
 K'\\K_\perp'
 \end{bmatrix}.\label{eq-faty}
-\end{equation}
-Thus
-\begin{equation}
+\end{equation} Thus \begin{equation}
 XY=
 \begin{bmatrix}
 K&K_\perp
@@ -233,10 +195,7 @@ K&K_\perp
 \begin{bmatrix}
 K'\\K_\perp'
 \end{bmatrix}.
-\end{equation}
-If $Y$ is a Moore-Penrose Inverse of $X$ then $XY$ must be symmetric, and thus $Q=0$.
-Next
-\begin{equation}
+\end{equation} If $Y$ is a Moore-Penrose Inverse of $X$ then $XY$ must be symmetric, and thus $Q=0$. Next \begin{equation}
 YX=
 \begin{bmatrix}
 L&L_\perp
@@ -248,9 +207,7 @@ R\Lambda&0
 \begin{bmatrix}
 L'\\L_\perp'
 \end{bmatrix}.
-\end{equation}
-If $Y$ is a Moore-Penrose Inverse of $X$ then $YX$ must be symmetric, and thus $R=0$. Next
-\begin{equation}
+\end{equation} If $Y$ is a Moore-Penrose Inverse of $X$ then $YX$ must be symmetric, and thus $R=0$. Next \begin{equation}
 XYX=
 \begin{bmatrix}
 K&K_\perp
@@ -262,10 +219,7 @@ K&K_\perp
 \begin{bmatrix}
 L'\\L_\perp'
 \end{bmatrix}.
-\end{equation}
-If $Y$ is a Moore-Penrose Inverse of $X$ then $XYX$ must be equal to $X$, and thus $P=\Lambda^{-1}$.
-Finally
-\begin{equation}
+\end{equation} If $Y$ is a Moore-Penrose Inverse of $X$ then $XYX$ must be equal to $X$, and thus $P=\Lambda^{-1}$. Finally \begin{equation}
 YXY=
 \begin{bmatrix}
 L&L_\perp
@@ -277,92 +231,75 @@ R\Lambda P&R\Lambda Q
 \begin{bmatrix}
 L'\\L_\perp'
 \end{bmatrix}.
-\end{equation}
-If $Y$ is a Moore-Penrose Inverse of $X$ then $R$ and $Q$ are zero, and we must have $YXY=Y$, which implies $S=0$.
+\end{equation} If $Y$ is a Moore-Penrose Inverse of $X$ then $R$ and $Q$ are zero, and we must have $YXY=Y$, which implies $S=0$.
 :::
 
-
 ::: {#def-procrustes}
-Suppose $X$ is an $n\times m$ "tall" matrix. Suppose $\mathcal{Y}$ is the set of all $n\times m$ matrices with $Y'Y=I$. Then the *Procrustus Transformation* of $X$ is defined as
+Suppose $X$ is an $n\times m$ "tall" matrix. Suppose $\mathcal{Y}$ is the set of all $n\times m$ matrices with $Y'Y=I$. Then the *Procrustus Transformation* of $X$ is defined as the least squares projection of $X$ on $\mathcal{Y}$. Thus\footnote{We use $\text{SSQ}()$ for the unweighted sum of squares of its matrix or vector argument.}
 $$
 \Pi_{\mathcal{Y}}(X):=\mathop{\text{argmin}}_{Y\in\mathcal{Y}}\ \text{SSQ}(X-Y)=\mathop{\text{argmax}}_{Y\in\mathcal{Y}}\ \text{tr}\ Y'X.
 $$
 :::
 
 ::: {#thm-procrustus}
-Suppose $X$ is an $n\times m$ "tall" matrix of rank $r$ with "fat" SVD
-given by \eqref{eq-fatx}.
-Then
-$$
+Suppose $X$ is an $n\times m$ "tall" matrix of rank $r$ with "fat" SVD given by \eqref{eq-fatx}. Then $$
 \Pi_{\mathcal{Y}}(X):=\{Y\mid Y=KL'+K_\perp^{\ }{} SL_\perp'\}
-$$ 
-with $S$ any $(n-r)\times(m-r)$ matrix satisfying $S'S=I$.
-::: 
+$$ with $S$ any $(n-r)\times(m-r)$ matrix satisfying $S'S=I$. Moreover $\text{tr}\ X'Y=\text{tr}\ \Lambda$ for any $Y\in\Pi_{\mathcal{Y}}(X)$.
+:::
 
-:::{#cor-procrustus}
-If $X$ is an $n\times m$ "tall" matrix of rank $r$ with "fat" SVD
-given by \eqref{eq-fatx} then
-$$
-\max_{Y\in\mathcal{Y}}\text{tr}\ Y'X=\text{tr}\ \Lambda,
-$$
-and the maximum is attained for any $Y\in\Pi_Y(X)$.
+::: proof
+We partition $Y$ in the same way as $X$. Thus $$
+Y=\begin{bmatrix}K&K_\perp\end{bmatrix}\begin{bmatrix}P&Q\\R&S\end{bmatrix}
+\begin{bmatrix}L'\\L_\perp'\end{bmatrix},
+$$ where the partitioned matrix in the middle must be orthonormal. Now $\text{tr} X'Y=\text{tr}\ \Lambda P$. Because $P'P+R'R=I$ we have $P'P\lesssim I$, which implies $\text{diag}(P)\lesssim I$ and thus $\text{tr}\ X'Y\leq\text{tr}\Lambda$, with equality if and only if $P=I$. But $P=I$ implies that $Q$ and $R$ are zero.
+:::
+
+::: {#rem-norm}
+Note that the Procrustus transformation is set-valued, unless $r=m$. But the value of $\text{tr}\ Y'X$ is unique, even if $X$ is singular. The optimal value of $\text{tr}\ Y'X$ is also known as the trace norm, the nuclear norm, or the Schatten-1 norm of $X$, and consequently we will also write it as $\|X\|_\tau$.
+:::
+
+::: {#rem-trace}
+The Procrustus transformation of $X$ has a determinate part $KL'$ and an indeterminate part $K_\perp SL_\perp'$ which depends on $S$. For the determinate part we have the formula $KL'=X(X'X)^{-\frac12}$ where $(X'X)^{-\frac12}$ is the square root of the Moore-Penrose inverse of $X'X$. Because $X'X$ may be singular this is not the same as the inverse of the square root of $X'X$.
 :::
 
 ::: {#def-sqrt}
-The positive semidefinite square root of a 
-positive semidefinite $A$ is  positive semidefinite  
-matrix $B$ with $B^2=A$. 
-::: 
+The positive semidefinite square root of a positive semidefinite $A$ is any positive semidefinite matrix $B$ with $B^2=A$.
+:::
 
 ::: {#thm-sqrt}
-A positive semi-definite matrix $A$ has a unique positive semidefinite 
-square root $A^\frac12$.
+A positive semi-definite matrix $A$ has a unique positive semidefinite square root $A^\frac12$.
 :::
-::: {.proof}
-The "fat" SVD of $A$ (which is identical here to the eigenvalue decomposition) is
-\begin{equation}
+
+::: proof
+The "fat" SVD of $A$ (which is identical here to its eigenvalue decomposition) is \begin{equation}
 A = \begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
 \begin{bmatrix}K'\\K_\perp'\end{bmatrix}.
-\end{equation}
-Any other symmetric matrix of the same size as $A$ can be written as
-\begin{equation}
+\end{equation} Any other symmetric matrix of the same size as $A$ can be written as \begin{equation}
 B = \begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}P&Q\\Q'&R\end{bmatrix}
 \begin{bmatrix}K'\\K_\perp'\end{bmatrix},
-\end{equation}
-with $P$ and $R$ symmetric.
-Thus
-\begin{equation}
+\end{equation} with $P$ and $R$ symmetric. Thus \begin{equation}
 B^2=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}P^2+QQ'&PQ+QR\\Q'P+RQ'&Q'Q+R^2\end{bmatrix}
 \begin{bmatrix}K'\\K_\perp'\end{bmatrix}
-\end{equation}
-Now $B^2=A$ implies $Q'Q+R^2=0$, which implies $Q=0$ and $R=0$.
-Also $P^2=\Lambda$, and thus
-\begin{equation}
+\end{equation} Now $B^2=A$ implies $Q'Q+R^2=0$, which implies $Q=0$ and $R=0$. Also $P^2=\Lambda$, and thus \begin{equation}
 A^\frac12 = \begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda^\frac12&0\\0&0\end{bmatrix}
 \begin{bmatrix}K'\\K_\perp'\end{bmatrix}
 \end{equation}
 :::
 
-
 ::: {#def-polar}
-$X=YS$ is a polar decomposition of the $n\times m$ matrix $X$ if $Y'Y=I$ and
-$S$ is positive semidefinite.
+$X=YV$ is a polar decomposition of the $n\times m$ matrix $X$ if $Y'Y=I$ and $V$ is positive semidefinite.
 :::
 
 ::: {#thm-polar}
-$X=YS$ is a polar decomposition if and only if $S=(X'X)^\frac12$ and 
-$Y\in\Pi_{\mathcal{Y}}(X)$.
+$X=YV$ is a polar decomposition if and only if $V=(X'X)^\frac12$ and $Y\in\Pi_{\mathcal{Y}}(X)$.
 :::
 
-::: {.proof}
-$X=YS$ implies $X'X=S^2$, and thus $S$ is the unique square root of $X'X$.
-Suppose $X$ has "fat" SVD given by \eqref{eq-fatx}. Any $n\times m$ matrix $Y$
-can be written as
-\begin{equation}
+::: proof
+$X=YV$ implies $X'X=V^2$, and thus $V$ is the unique square root of $X'X$. Suppose $X$ has "fat" SVD given by \eqref{eq-fatx}. Any $n\times m$ matrix $Y$ can be written as \begin{equation}
 Y=
 \begin{bmatrix}
 K&K_\perp
@@ -374,10 +311,8 @@ R&S
 \begin{bmatrix}
 L'\\L_\perp'
 \end{bmatrix}.\label{eq-fatyy}
-\end{equation}
-Also
-\begin{equation}
-S=
+\end{equation} Also \begin{equation}
+V=
 \begin{bmatrix}
 L&L_\perp
 \end{bmatrix}
@@ -388,10 +323,8 @@ L&L_\perp
 \begin{bmatrix}
 L'\\L_\perp'
 \end{bmatrix}
-\end{equation}
-Thus
-\begin{equation}
-YS=
+\end{equation} Thus \begin{equation}
+YV=
 \begin{bmatrix}
 K&K_\perp
 \end{bmatrix}
@@ -402,61 +335,40 @@ R\Lambda&0
 \begin{bmatrix}
 L'\\L_\perp'
 \end{bmatrix}.
-\end{equation}
-This is equal to $X$ if and only if $P=I$ and $R=0$. Taking this into account
-\begin{equation}
+\end{equation} This is equal to $X$ if and only if $P=I$ and $R=0$. Taking this into account \begin{equation}
 Y'Y=
 \begin{bmatrix}
 L&L_\perp
 \end{bmatrix}
 \begin{bmatrix}
 I&Q\\
-Q'&Q'Q+S'S
+Q'&Q'Q+V'V
 \end{bmatrix}
 \begin{bmatrix}
 L'\\L_\perp'
 \end{bmatrix}.
-\end{equation}
-which is equal to the identity if and only if $Q=0$ and $S'S=I$.
+\end{equation} which is equal to the identity if and only if $Q=0$ and $V'V=I$.
 :::
 
-## Fundamental Theorem
+# Fundamental Theorem of Factor Analysis
 
-In this section we look at finding exact solutions of the "full" system of equations
-\eqref{eq-fa1}-\eqref{eq-fa3}. As we will see, 
-the basic solvability result, which we call the "Fundamental Theorem of Factor
-Analysis", following @kestelman_52, also has computational consequences.
+In this section we look at finding exact solutions of the "full" system of equations \eqref{eq-fa1}-\eqref{eq-fa3}. As we will see, the basic solvability result, which we call the "Fundamental Theorem of Factor Analysis", following @kestelman_52, also has computational consequences.
 
-We start by considering the "reduced" OFA system, using $C:=X'X$,
-\begin{subequations}
+We start by considering the "reduced" factor analysis system, using $C:=X'X$, \begin{subequations}
 \begin{align}
 C&=TT',\label{eq-pfa1}\\
 T&\in\mathcal{T}.\label{eq-pfa2}
 \end{align}
-\end{subequations}
-Solvability of the reduced system is a necessary condition for solvability
-of the full system \eqref{eq-fa1}-\eqref{eq-fa3}.
+\end{subequations} Solvability of the reduced system is a necessary condition for solvability of the full system \eqref{eq-fa1}-\eqref{eq-fa3}.
 
-Most factor analysis procedures are two-step methods. In the first step they find
-an approximate solution $T$ to the reduced system, and then use this 
-$T$ to find an approximate solution $Y$ to the full system. The two steps may 
-actually use two different loss functions, the first one to assess 
-the fit of $C=TT'$ and the second one the fit of $X=YT'$. This practice is motivated, 
-and to some extent justified, by the following theorem, first proved by @garnett_19.
+Most factor analysis procedures are two-step methods. In the first step they find an approximate solution $T$ to the reduced system, and then use this $T$ to find an approximate solution $Y$ to the full system. The two steps may actually use two different loss functions, the first one to assess the fit of $C=TT'$ and the second one the fit of $X=YT'$. This practice is motivated, and to some extent justified, by the following theorem, first proved by @garnett_19.
 
 ::: {#thm-fundamental}
-
-
 The *full* system \eqref{eq-fa1}-\eqref{eq-fa3} is solvable if and only if the *reduced* system \eqref{eq-pfa1}-\eqref{eq-pfa2} is solvable.
 :::
 
-
-
-::: {.proof}
-Necessity is trivial. For sufficiency we have to prove that if $T$ is any solution of the
-reduced system then there is a $Y$ such that $(T,Y)$ satisfies the full system.
-Our proof uses the "fat" singular value decomposition (SVD) of the $n\times m$ matrix $X$, assumed to be of rank $r$, which is
-\begin{equation}
+::: proof
+Necessity is trivial. For sufficiency we have to prove that if $T$ is any solution of the reduced system then there is a $Y$ such that $(T,Y)$ satisfies the full system. Our proof uses the "fat" singular value decomposition (SVD) of the $n\times m$ matrix $X$, assumed to be of rank $r$, which is \begin{equation}
 X_{n\times m}=
 \begin{bmatrix}
 K_{n\times r}^1&K^0_{n\times(n-r)}
@@ -468,11 +380,9 @@ K_{n\times r}^1&K^0_{n\times(n-r)}
 \begin{bmatrix}
 L_{m\times r}^1&L_{m\times(m-r)}^0
 \end{bmatrix}'.\label{eq-fatxx}
-\end{equation}
-The singular values in $\Lambda_{r\times r}$ are positive and decrease along the diagonal. Subscripts are used to indicate the dimension of the matrices.
+\end{equation} The singular values in $\Lambda_{r\times r}$ are positive and decrease along the diagonal. Subscripts are used to indicate the dimension of the matrices.
 
-From $C=TT'$ we know that a "fat" SVD of $T$ is
-\begin{equation}
+From $C=TT'$ we know that a "fat" SVD of $T$ is \begin{equation}
 T_{m\times p}=
 \begin{bmatrix}
 L^1_{m\times r}&L^0_{m\times(m-r)}
@@ -484,11 +394,9 @@ L^1_{m\times r}&L^0_{m\times(m-r)}
 \begin{bmatrix}
 M^1_{p\times r}&M^0_{p\times(p-r)}
 \end{bmatrix}',\label{eq-fatt}
-\end{equation}
-for some square orthonormal $M$. 
+\end{equation} for some square orthonormal $M$.
 
-Write $Y$ as
-\begin{equation}
+Write $Y$ as \begin{equation}
 Y_{n\times p}=
 \begin{bmatrix}
 K^1_{n\times r}&K^0_{n\times(n-r)}
@@ -499,11 +407,9 @@ V^{11}_{r\times r}&V^{10}_{r\times (p-r)}\\V^{01}_{(n-r)\times r}&V^{11}_{(n-r)\
 \begin{bmatrix}
 M^1_{p\times r}&M^0_{p\times(p-r)}
 \end{bmatrix}',\label{eq-writey}
-\end{equation}
-where the partitioned matrix $V$ in the middle must satisfy $V'V=I$.
+\end{equation} where the partitioned matrix $V$ in the middle must satisfy $V'V=I$.
 
-Now $X=YT'$ becomes
-\begin{multline}
+Now $X=YT'$ becomes \begin{multline}
 \begin{bmatrix}
 \Lambda_{r\times r}&0_{r\times(m-r)}\\
 0_{(n-r)\times r}&0_{(n-r)\times(m-r)}
@@ -516,32 +422,20 @@ V^{11}_{r\times r}&V^{10}_{r\times (p-r)}\\V^{01}_{(n-r)\times r}&V^{11}_{(n-r)\
 \Lambda_{r\times r}&0_{r\times (m-r)}\\
 0_{(p-r)\times r}&0_{(p-r)\times(m-r)}
 \end{bmatrix},\label{eq-prodyt}
-\end{multline}
-which implies  
+\end{multline} which implies\
 \begin{equation}
 V=\begin{bmatrix}
 I_{r\times r}&0_{r\times(p-r)}\\
 0_{(n-r)\times r}&S_{(n-r)\times(p-r)}
 \end{bmatrix}\label{eq-solves}
-\end{equation}
-where $S$ satisfies $S'S=I$, but is otherwise arbitrary.
+\end{equation} where $S$ satisfies $S'S=I$, but is otherwise arbitrary.
 
-From \eqref{eq-writey} and \eqref{eq-solves} we see that
-\begin{equation}
+From \eqref{eq-writey} and \eqref{eq-solves} we see that \begin{equation}
 Y=K_1M_1'+K_0SM_0'\label{eq-yperf}
-\end{equation}
-provides us with the required solution of the full system.
+\end{equation} provides us with the required solution of the full system.
 :::
 
-If the non-zero singular values of $X$, and consequently of $T$,  are all different then $K_1$ and 
-$M_1$ are uniquely determined. Matrices $K_0$ and 
-$M_0$ consist of orthonormal bases for the null-spaces of $X$ and $T$,
-which are only determined up to rotations. They do not have to come from an SVD, 
-they can be computed more efficiently by QR decomposoition or by reducing the matrix 
-to row/column echelon form. We can select any one of these bases
-and absorb the rotations in the arbitrary matrix $S$.
-The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT'$ there is a nonlinear manifold of solutions $Y$ of $X=YT'$. Even if $T$ is identified, $Y$ is not. This is the *factor indeterminacy problem*, which has haunted the field for more than 100 years.
-(@steiger_schoenemann_78).
+If the non-zero singular values of $X$, and consequently of $T$, are all different then $K_1$ and $M_1$ are uniquely determined. Matrices $K_0$ and $M_0$ consist of orthonormal bases for the null-spaces of $X$ and $T$, which are only determined up to rotations. They do not have to come from an SVD, they can be computed more efficiently by QR decomposition or by reducing the matrix to row/column echelon form. We can select any one of these bases and absorb the rotations in the arbitrary matrix $S$. The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT'$ there is a nonlinear manifold of solutions $Y$ of $X=YT'$. Even if $T$ is identified, $Y$ is not. This is the *factor indeterminacy problem*, which has haunted the field for more than 100 years. (@steiger_schoenemann_78).
 
 \sectionbreak
 
@@ -549,68 +443,57 @@ The fundamental theorem implies that for any solution $T\in\mathcal{T}$ of $C=TT
 
 ## ULS
 
-There are several OFA techniques that use least squares loss functions\footnote{We use SSQ() for the unweighted sum of squares of a matrix or vector.}. The oldest and most obvious one is
-\begin{equation}
+There are several OFA techniques that use least squares loss functions\footnote{We use SSQ() for the unweighted sum of squares of a matrix or vector.}. The oldest and most obvious one is \begin{equation}
 \sigma(T)=\text{SSQ}(C-TT'),\label{eq-minres}
-\end{equation}
-where $\text{SSQ}()$ stands for the unweighted sum of squares. Minimizing \eqref{eq-minres)} is the *Unweighted Least Squares (ULS)* method of orthogonal factor analysis.
+\end{equation} where $\text{SSQ}()$ stands for the unweighted sum of squares. Minimizing \eqref{eq-minres)} is the *Unweighted Least Squares (ULS)* method of orthogonal factor analysis.
 
-For OCFA \eqref{eq-minres} becomes
-\begin{equation}
+For OCFA \eqref{eq-minres} becomes \begin{equation}
 \sigma(A,D)=\text{SSQ}(C-AA'-D^2).\label{eq-minrescfa}
-\end{equation}
-An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function \eqref{eq-minrescfa} over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course ULS only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa}
-are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_69 and @joreskog_vanthillo_71.
+\end{equation} An alternating least squares technique to minimize \eqref{eq-minrescfa} was first proposed by @thomson_34. It alternates minimizing the loss function \eqref{eq-minrescfa} over $D$ for the current $A$ and minimizing over $A$ for the current $D$. Of course ULS only finds an approximate solution to the reduced system, and it leaves open the question on how to compute the factor scores $Y$. Alternative algorithms for minimizing \eqref{eq-minrescfa} are MINRES of @harman_jones_66 and the Newton-Raphson technique of @derflinger_69 and @joreskog_vanthillo_71.
+
+The file lsfa.R in the repository has a function lsfa() to do an ULS for OCFA. It needs an initial estimate of $D$, for which we can take $\text{diag}^{-1}(C^{-1})$. Then it applies a small number of Thomson iterations before switching to Newton iterations. First and second derivatives are taken from @deleeuw_E_25d. Eigenvalue/eigenvector calculations use the RSpectra package (@qiu_mei_24).
 
 ## GLS
+
+@joreskog_goldberger_72
 
 $$
 \sigma(T):=\text{tr}\ C^{-1}(C-TT')C^{-1}(C-TT')
 $$
+
 majorization, through ULS.
+
+$$
+\mathbf{SSQ}(I-\tilde A\tilde A'-C^{-\frac12}DC^{-\frac12})=\sum_{s=p+1}^m\lambda_s^2(I-C^{-\frac12}DC^{-\frac12})
+$$
 
 ## MLS
 
-Also for OCFA @young_40 and @whittle_52 propose minimizing the weighted least 
-squares loss function
-\begin{equation}
+Also for OCFA @young_40 and @whittle_52 propose minimizing the weighted least squares loss function \begin{equation}
 \sigma(A, D, F)=\text{tr}\ (X-FA')D^{-2}(X-FA')',\label{eq-young-whittle}
-\end{equation}
-which has the disadvantage that it assumes $D$ is known and the advantage that the 
-problem becomes a form of principal component analysis (PCA) in which the solution can be computed with a single singular value decomposition.
+\end{equation} which has the disadvantage that it assumes $D$ is known and the advantage that the problem becomes a form of principal component analysis (PCA) in which the solution can be computed with a single singular value decomposition.
 
-It is tempting to use a block method to minimize \eqref{eq-young-whittle}, alternating finding the optimum
-$F$ and $A$ for fixed $D$, and then repeating this iteratively with the new $D$ equal to
-\begin{equation}
+It is tempting to use a block method to minimize \eqref{eq-young-whittle}, alternating finding the optimum $F$ and $A$ for fixed $D$, and then repeating this iteratively with the new $D$ equal to \begin{equation}
 D^2=n^{-1}\text{diag}\ (X-FA')'(X-FA').\label{eq-yw}
-\end{equation}
-This in fact corresponds to alternating minimization of the loss function
-\begin{equation}
+\end{equation} This in fact corresponds to alternating minimization of the loss function \begin{equation}
 \sigma(A,D,F)=n\log\text{det}(D^2)+\text{tr}\ (X-FA')D^{-2}(X-FA')'.\label{eq-lawley41}
-\end{equation}
-But \eqref{eq-lawley41} is the negative likelihood loss function for the fixed factor model proposed by @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a perfect but trivial solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
+\end{equation} But \eqref{eq-lawley41} is the negative likelihood loss function for the fixed factor model proposed by @lawley_41, and we know this loss function is unbounded below, does not have a minimum, and converges to a perfect but trivial solution which has $p$ of the uniquenesses in $D^2$ equal to zero (@anderson_rubin_56).
 
-The file lsfa.R in the repository has a function lsfa() to do an ULS for OCFA. It
-needs an initial estimate of $D$, for which we can take $\text{diag}^{-1}(C^{-1})$.
-Then it applies a small number of Thomson iterations before switching to Newton
-iterations. First and second derivatives are taken from @deleeuw_E_25d. Eigenvalue/eigenvector calculations use the RSpectra package (@qiu_mei_24).
+$$
+\min_{F,\tilde A}\text{SSQ}(XD^{-1}-F{\tilde A})=\sum_{s=p+1}^m\lambda_s(D^{-1}CD^{-1})
+$$
 
 ## MDFA
 
-A more direct way of fitting the full OCFA model was discussed (independently and around the same time) in the dissertation of @socan_03 and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as *Matrix Decomposition Factor analysis (MDFA)*. Socan attributes MDFA (which they call *Direct Factor Analysis*) to a 2001 personal communication and some unpublished notes of their advisor Henk Kiers.
+A more direct way of fitting the full orthogonal common factor equations was discussed (independently and around the same time) in the dissertation of @socan_03\footnote{Attributes to a 2001 personal communication and some unpublished notes of Henk Kiers.} and in the conference chapter of @deleeuw_C_04a (presented at the conference in 2002). Recently this technique has become known as *Matrix Decomposition Factor analysis (MDFA)*.
 
-In MDFA the least squares loss function is
-\begin{equation}
+In MDFA the least squares loss function is \begin{equation}
 \sigma(Y,T):=\text{SSQ}(X-YT'),\label{eq-lossdef}
-\end{equation}
-which must be minimized over $Y'Y=I$ and $T\in\mathcal{T}$.
+\end{equation} which must be minimized over $Y'Y=I$ and $T\in\mathcal{T}$.
 
-MDFA was not immediately accepted as an alternative factor analysis technique. It made its first journal appearance in a series of papers by Unkel and Trendafilov, based largely on Unkel's dissertation (@unkel_09). Over the years they contributed a "robust"
-version of MDFA (@unkel_trendafilov_10) and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11). There is a nice review of their contributions in @unkel_trendafilov_10, with an update in @trendafilov_unkel_krzanowski_13.
+MDFA was not immediately accepted as an alternative factor analysis technique. It made its first journal appearance in a series of papers by Unkel and Trendafilov, based largely on Unkel's dissertation (@unkel_09). Over the years they contributed a "robust" version of MDFA (@unkel_trendafilov_10) and a version for a "wide" data matrix $X$ (@trendafilov_unkel_11). There is a nice review of their contributions in @unkel_trendafilov_10, with an update in @trendafilov_unkel_krzanowski_13.
 
-There have been additional important contributions to MDFA in @adachi_12, @adachi_trendafilov_18,
-@stegeman_16, @terada_25, and @yamashita_25. We will discuss these recent contributions in various places in our present paper. When googling MDFA, keep in mind that Adachi initially used *Data-Fitting Factor Analysis*, while Stegeman used the *Data Factor Model*. 
-
+There have been additional important contributions to MDFA in @adachi_12, @adachi_trendafilov_18, @stegeman_16, @terada_25, and @yamashita_25. We will discuss these recent contributions in various places in our present paper. When googling MDFA, keep in mind that Adachi initially used *Data-Fitting Factor Analysis*, while Stegeman used the *Data Factor Model*.
 
 \sectionbreak
 
@@ -620,287 +503,167 @@ There have been additional important contributions to MDFA in @adachi_12, @adach
 
 The Alternating Least Squares (ALS) algorithm proposed for MDFA by both Kiers (in @socan_03) and @deleeuw_C_04a alternates finding the optimum $Y$ for given $T$ and the optimum $T$ for given $Y$.
 
-Finding the optimum $T$ for given $Y$ is  straightforward.
-We complete the square, as in
-\begin{equation}
+Finding the optimum $T$ for given $Y$ is straightforward. We complete the square, as in \begin{equation}
 \sigma(Y,T)=
 \text{tr}\ C+\text{tr} (T-X'Y)'(T-X'Y)-\text{tr}\ Y'CY.
-\end{equation}
-Thus the optimum $T$ for given $Y$ is obtained by projecting the $m\times p$ matrix
-$X'Y$ on the set of matrices $\mathcal{T}$. We shall use $\Pi_{\mathcal{T}}()$
-for the unweighted least squares projection on $\mathcal{T}$.
+\end{equation} Thus the optimum $T$ for given $Y$ is obtained by projecting the $m\times p$ matrix $X'Y$ on the set of matrices $\mathcal{T}$. We shall use $\Pi_{\mathcal{T}}()$ for the unweighted least squares projection on $\mathcal{T}$.
 
 $$
 T\leftarrow\Pi_{\mathcal{T}}(X'Y)
 $$
 
-For exploratory OCFA this gives 
-\begin{equation}
+For exploratory OCFA this gives \begin{equation}
 \begin{bmatrix}A&\mid&D\end{bmatrix}\leftarrow\begin{bmatrix}X'F&\mid&\text{diag}(X'U)\end{bmatrix}.
-\end{equation}
-For confirmatory MDFA in which we require some loadings to be equal to each other and/or to to fixed constants finding $\Pi_{\mathcal{T}}(X'Y)$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
+\end{equation} For confirmatory MDFA in which we require some loadings to be equal to each other and/or to to fixed constants finding $\Pi_{\mathcal{T}}(X'Y)$ is still a simple linear least squares problem. If there are inequality constraints we need some form of quadratic programming.
 
-Expanding loss gives
-\begin{equation}
+Expanding loss gives \begin{equation}
 \sigma(Y,T)=\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ Y'XT.\label{eq-sigmay}
-\end{equation}
-To compute the optimal $Y$ for given $T$ we have to maximize $\text{tr}\ Y'XT$ over all
-$n\times p$ orthonormal $Y$.
-We start with some general lemmas. Remember that the *trace norm* (a.k.a. the 
-*nuclear norm*) $\|Z\|_\tau$ of a matrix $Z$ is the sum of its singular values. The trace norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
+\end{equation} To compute the optimal $Y$ for given $T$ we have to maximize $\text{tr}\ Y'XT$ over all $n\times p$ orthonormal $Y$. We start with some general lemmas. Remember that the *trace norm* (a.k.a. the *nuclear norm*) $\|Z\|_\tau$ of a matrix $Z$ is the sum of its singular values. The trace norm is also equal to the sum of the square roots of the eigenvalues of $Z'Z$ and thus equal to the trace of $(Z'Z)^{1/2}$.
 
 ::: {#lem-procrustus}
-If $Z$ and $Y$ are $n\times p$ with $Y'Y=I$ then 
-\begin{equation}
+If $Z$ and $Y$ are $n\times p$ with $Y'Y=I$ then \begin{equation}
 \text{tr}\ Y'Z\leq\|Z\|_\tau.\label{eq-tnorm}
 \end{equation}
 :::
 
-:::{.proof}
-The stationary equations are $Z=YM$ with $Y'Y=I$ and $M$ a symmetric matrix of Lagrange multipliers of order $p$. It follows that $M^2=Z'Z$ and thus $M$ is the (unique) positive semi-definite symmetric square root $\smash{(Z'Z)^{1/2}}$
-At the maximum $Z=YM$ implies $\text{tr}\ Y'Z=\text{tr}\ M=\|X\|_\tau$.
+::: proof
+The stationary equations are $Z=YM$ with $Y'Y=I$ and $M$ a symmetric matrix of Lagrange multipliers of order $p$. It follows that $M^2=Z'Z$ and thus $M$ is the (unique) positive semi-definite symmetric square root $\smash{(Z'Z)^{1/2}}$ At the maximum $Z=YM$ implies $\text{tr}\ Y'Z=\text{tr}\ M=\|X\|_\tau$.
 :::
 
 Note that @lem-procrustus does not say that the optimizing $Y$ is unique. We get more insight from an alternative and more constructive proof (also taken from @deleeuw_C_04a, Appendix). It uses the "fat" singular value decomposition of the $n\times p$ matrix $Z$ of rank $r$.
 
 ::: {#lem-construct}
-If the $n\times p$ matrix $Z$ with rank $r$ has the "fat" SVD
-\begin{equation}
+If the $n\times p$ matrix $Z$ with rank $r$ has the "fat" SVD \begin{equation}
 Z=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
 \begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-xa}
-\end{equation}
-then the $n\times p$ orthonormal $Y$ maximizes $\text{tr}\ Y'Z$
-if and only if
-\begin{equation}
+\end{equation} then the $n\times p$ orthonormal $Y$ maximizes $\text{tr}\ Y'Z$ if and only if \begin{equation}
 Y=KL'+K_\perp^{\ }SL_\perp',\label{eq-yopt}
-\end{equation}
-for some $(n-r)\times(p-r)$ matrix $S$ with $S'S=I$.
+\end{equation} for some $(n-r)\times(p-r)$ matrix $S$ with $S'S=I$.
 :::
 
-::: {.proof}
-Partition the columnwise orthonormal $n\times p$ matrix 
-$Y$ in the same way as $Z$.
-\begin{equation}
+::: proof
+Partition the columnwise orthonormal $n\times p$ matrix $Y$ in the same way as $Z$. \begin{equation}
 Y=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}P&Q\\R&S\end{bmatrix}
 \begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-odecomp}
-\end{equation}
-where the four-block partitioned $n\times p$ matrix in the middle of \eqref{eq-odecomp} must be columnwise orthonormal. Now $\text{tr}\ Y'X=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner\footnote{$A\lesssim B$ means $A-B$ positive semi-definite.} sense (because we must have
-$P'P+R'R=I$). It follows that the diagonal elements of $P$ must be less than or equal to one, and thus the maximum of
-$\text{tr}\ Y'X$ is $\text{tr}\ \Lambda$, uniquely attained for $P=I$.
-But $P=I$ implies that at the maximum $R=0$ and $Q=0$, and $S$ is any
-$(n-r)\times(p-r)$ matrix with $S'S=I$. Thus the optimum $Y$ is
-as given by \eqref{eq-yopt}.
+\end{equation} where the four-block partitioned $n\times p$ matrix in the middle of \eqref{eq-odecomp} must be columnwise orthonormal. Now $\text{tr}\ Y'X=\text{tr}\ \Lambda P$ and the constraint on the $r\times r$ matrix $P$ is that $P'P\lesssim I$ in the Loewner\footnote{$A\lesssim B$ means $B-A$ positive semi-definite.} sense (because we must have $P'P+R'R=I$). It follows that the diagonal elements of $P$ must be less than or equal to one, and thus the maximum of $\text{tr}\ Y'X$ is $\text{tr}\ \Lambda$, uniquely attained for $P=I$. But $P=I$ implies that at the maximum $R=0$ and $Q=0$, and $S$ is any $(n-r)\times(p-r)$ matrix with $S'S=I$. Thus the optimum $Y$ is as given by \eqref{eq-yopt}.
 :::
 
-We can now apply the lemmas to minimizing the loss in \eqref{eq-sigmay}. This generalizes
-the fundamental theorem of factor analysis to the case of imperfect fit.
+We can now apply the lemmas to minimizing the loss in \eqref{eq-sigmay}. This generalizes the fundamental theorem of factor analysis to the case of imperfect fit.
 
-::: {#thm-procrustus}
-If the $n\times p$ matrix $XT$ has rank $r$ with $r\leq m<p<n$ and "fat" singular value decomposition
-\begin{equation}
+<div>
+
+If the $n\times p$ matrix $XT$ has rank $r$ with $r\leq m<p<n$ and "fat" singular value decomposition \begin{equation}
 XT=\begin{bmatrix}K&K_\perp\end{bmatrix}
 \begin{bmatrix}\Lambda&0\\0&0\end{bmatrix}
 \begin{bmatrix}L'\\L_\perp'\end{bmatrix},\label{eq-xta}
-\end{equation}
-then the maximum of $\text{tr}\ Y'XT$ over $n\times p$ orthonormal $Y$ is 
-$\|XT\|_\tau$, attained for all $Y$ with
-\begin{equation}
+\end{equation} then the maximum of $\text{tr}\ Y'XT$ over $n\times p$ orthonormal $Y$ is $\|XT\|_\tau$, attained for all $Y$ with \begin{equation}
 Y=KL'+K_\perp SL_\perp',\label{eq-yoptt}
-\end{equation}
-where $S$ is any
-$(n-r)\times(p-r)$ matrix with $S'S=I$.
-:::
-::: {.proof}
+\end{equation} where $S$ is any $(n-r)\times(p-r)$ matrix with $S'S=I$.
+
+</div>
+
+::: proof
 Directly from @lem-construct.
 :::
 
 It is important to see that in MDFA we cannot use $Y=KL'$, because then $Y'Y=LL'$, which is of rank $r\leq p$ and thus not equal to the identity if $r<p$. Also note that formula \eqref{eq-yoptt} is identical to formula \eqref{eq-yperf} in the fundamental theorem. This is not surprising, since both compute the optimal $Y$ for given $T$. The fundamental theorem merely adds that the optimal $Y$ makes loss equal to zero if $C=TT'$.
 
-In factor analytic literature it is often said that the factor scores $Y$ have the
-"determinate" part $KL'$ and the "indeterminate" part $K_\perp SL_\perp'$. There
-are some simple rank conditions which imply that the indeterminate part does not play a
-role in Algorithm A, which uses $X'Y$ to update $T$, and in the fitted values, which use $YT'$. 
-And consequently in the loss function values, which use $T'X'Y$.
+In factor analytic literature it is often said that the factor scores $Y$ have the "determinate" part $KL'$ and the "indeterminate" part $K_\perp SL_\perp'$. There are some simple rank conditions which imply that the indeterminate part does not play a role in Algorithm A, which uses $X'Y$ to update $T$, and in the fitted values, which use $YT'$. And consequently in the loss function values, which use $T'X'Y$.
 
 ::: {#cor-unique}
+If $XT$ has rank $m$ and $Y=KL'+K_\perp SL_\perp'$ then
 
-If $XT$ has rank $m$ and  $Y=KL'+K_\perp SL_\perp'$ then
+1.  $X'Y=X'KL'=CT(T'CT)^{-1/2}$.
 
-1. $X'Y=X'KL'=CT(T'CT)^{-1/2}$. 
-
-2. $YT'=KL'T'=XT(T'CT)^{-1/2}T'$.
-
-:::
-::: {.proof}
-If $XT$ is of rank $m$ then both $X$ and $T$ are of rank $m$.
-We know that $K_\perp'XT=0$. Because $\text{rank}(T)=m$ this implies $X'K_\perp=0$.
-This proves part one. Because $\text{rank}(X)=m$ and $XTL_\perp=0$ 
-we have $L_\perp'T=0$. This proves part two. 
+2.  $YT'=KL'T'=XT(T'CT)^{-1/2}T'$.
 :::
 
+::: proof
+If $XT$ is of rank $m$ then both $X$ and $T$ are of rank $m$. We know that $K_\perp'XT=0$. Because $\text{rank}(T)=m$ this implies $X'K_\perp=0$. This proves part one. Because $\text{rank}(X)=m$ and $XTL_\perp=0$ we have $L_\perp'T=0$. This proves part two.
+:::
 
-The CFA equations \eqref{eq-cfa1}-\eqref{eq-cfa6} imply that $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim C$. The second one in turn implies that $0\lesssim D^2\lesssim\text{diag}(C)$. In most CFA techniques it is possible that the computed uniquenesses do not satisfy these inequality constraints
-and are consequently "improper" solutions. This is true for both MINRES and ML. We
-show that it is "less true" for MDFA.
+The CFA equations \eqref{eq-cfa1}-\eqref{eq-cfa6} imply that $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim C$. The second one in turn implies that $0\lesssim D^2\lesssim\text{diag}(C)$. In most CFA techniques it is possible that the computed uniquenesses do not satisfy these inequality constraints and are consequently "improper" solutions. This is true for both MINRES and ML. We show that it is "less true" for MDFA.
 
 ::: {#thm-bounds}
-In the exploratory MDFA solution of CFA we have $0\lesssim AA'\lesssim C$ and 
-$0\lesssim D^2\lesssim\text{diag}(C)$.
-:::
-::: {.proof}
-At the solution we have $A=X'F$ and thus $AA'=X'FF'X$.
-Because $FF'\lesssim I$ we have $AA'\lesssim C$. At the
-solution we also have $D=\text{diag}(X'U)$, or
-$d_j=x_j'u_j$. Since $u_j'u_j=1$  we have from Cauchy-Schwartz 
-$d_j^2\leq x_j'x_j=c_{jj}$.
+In the exploratory MDFA solution of CFA we have $0\lesssim AA'\lesssim C$ and $0\lesssim D^2\lesssim\text{diag}(C)$.
 :::
 
-@thm-bounds shows that worst-case improper solutions 
-do not happen in MDFA. Uniquenesses are always non-negative
-and bounded above by the diagonal of $C$, i.e. for correlation 
-matrices they are always between zero and one.
-Note however that we have not shown that $D^2\lesssim C$,
-so not all improper solutions are excluded. If it so happens 
-that $U'X$ is diagonal at the solution,
-which is certainly not guaranteed, then indeed 
-$D^2=X'UU'X\lesssim C$. 
+::: proof
+At the solution we have $A=X'F$ and thus $AA'=X'FF'X$. Because $FF'\lesssim I$ we have $AA'\lesssim C$. At the solution we also have $D=\text{diag}(X'U)$, or $d_j=x_j'u_j$. Since $u_j'u_j=1$ we have from Cauchy-Schwartz $d_j^2\leq x_j'x_j=c_{jj}$.
+:::
 
-The repository has a file mdfaAlgorithmA.R, with the function mdfaAlgorithmA() implementing
-Algorithm A. There is an argument proj which is a function that takes care of the least squares projections on $\mathcal{T}$. By default proj is mdfaCFAProject(), which replaces the last $m$ columns of $T$ by its diagonal, but changing this default projection routine allows us to incorporate any set of constraints. 
+@thm-bounds shows that worst-case improper solutions do not happen in MDFA. Uniquenesses are always non-negative and bounded above by the diagonal of $C$, i.e. for correlation matrices they are always between zero and one. Note however that we have not shown that $D^2\lesssim C$, so not all improper solutions are excluded. If it so happens that $U'X$ is diagonal at the solution, which is certainly not guaranteed, then indeed $D^2=X'UU'X\lesssim C$.
 
-We emphasize that mdfaAlgorithmA() updates $Y$ using the determinate part $KL'$ only, which means that in our iterations (and at convergence) we do not have $Y'Y=I$. @cor-unique shows that if we were to complete $Y$ by
-adding $K_\perp SL_\perp'$ in each iteration we would get the same sequence of loss function values and the same sequence of $T$ values.
+The repository has a file mdfaAlgorithmA.R, with the function mdfaAlgorithmA() implementing Algorithm A. There is an argument proj which is a function that takes care of the least squares projections on $\mathcal{T}$. By default proj is mdfaCFAProject(), which replaces the last $m$ columns of $T$ by its diagonal, but changing this default projection routine allows us to incorporate any set of constraints.
 
-It does mean however that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate part, but it remains true that this does not solve the original MDFA problem, which requires $Y'Y=I$. Also computing a proper $Y$ corresponding with the optimal $T$ forces us to make a choice of $S$ in \eqref{eq-yoptt}. In mdfaAlgorithmA() after convergence we optionally use the QR decompositon to compute an orthonormal bases $K_\perp$ of the left null space  and an orthonormal basis $L_\perp$ for the right null space of $XT$. We use a function identical to Null() from the package MASS (@venables_ripley_02). We choose the arbitrary $(n-m)\times(p-m)$ matrix $S$ by setting its first $p-m$ rows to the identity matrix, with the remaining rows zero.
+We emphasize that mdfaAlgorithmA() updates $Y$ using the determinate part $KL'$ only, which means that in our iterations (and at convergence) we do not have $Y'Y=I$. @cor-unique shows that if we were to complete $Y$ by adding $K_\perp SL_\perp'$ in each iteration we would get the same sequence of loss function values and the same sequence of $T$ values.
+
+It does mean however that if we want a proper $Y$ then we have to do some extra work after convergence. @adachi_12, section 2.5, makes a case for using only the determinate part, but it remains true that this does not solve the original MDFA problem, which requires $Y'Y=I$. Also computing a proper $Y$ corresponding with the optimal $T$ forces us to make a choice of $S$ in \eqref{eq-yoptt}. In mdfaAlgorithmA() after convergence we optionally use the QR decompositon to compute an orthonormal bases $K_\perp$ of the left null space and an orthonormal basis $L_\perp$ for the right null space of $XT$. We use a function identical to Null() from the package MASS (@venables_ripley_02). We choose the arbitrary $(n-m)\times(p-m)$ matrix $S$ by setting its first $p-m$ rows to the identity matrix, with the remaining rows zero.
 
 ## Algorithm B
 
-Write $\Pi_Y()$ for the (generally set-valued) least squares projection of
-a matrix on the columnwise orthonormal matrices of the same
-dimension. Also write $\Pi_{\mathcal{T}}()$ for least squares
-projection on $\mathcal{T}$. We also use the $\leftarrow$ symbol for
-updates. Thus $x\leftarrow f(x,y)$ means the update of $x$ (the "new" $X$) in an
-iteration is a function $f$ of the current $x$ and the current $y$. On the left hand
-side is what we are computing now and on the right hand side is what we have 
-computed before. 
+Write $\Pi_Y()$ for the (generally set-valued) least squares projection of a matrix on the columnwise orthonormal matrices of the same dimension. Also write $\Pi_{\mathcal{T}}()$ for least squares projection on $\mathcal{T}$. We also use the $\leftarrow$ symbol for updates. Thus $x\leftarrow f(x,y)$ means the update of $x$ (the "new" $X$) in an iteration is a function $f$ of the current $x$ and the current $y$. On the left hand side is what we are computing now and on the right hand side is what we have computed before.
 
-Then ALS iteration of Algorithm A is
-\begin{subequations}
+Then ALS iteration of Algorithm A is \begin{subequations}
 \begin{align}
 Y\leftarrow&\Pi_{\mathcal{Y}}(XT),\label{eq-als1}\\
 T\leftarrow&\Pi_{\mathcal{T}}(X'Y).\label{eq-als2}
 \end{align}
-\end{subequations}
-If we assume that $\text{rank}(X)=\text{rank}(T)=m$ then it does not matter how we choose $S$ in \eqref{eq-yopt}, because by @cor-unique for all
-choices of $S$ we have $\text{tr}\ Y'XT=\|XT\|_\tau$, and all choices of $S$ give the same update and the same loss function value.
+\end{subequations} If we assume that $\text{rank}(X)=\text{rank}(T)=m$ then it does not matter how we choose $S$ in \eqref{eq-yopt}, because by @cor-unique for all choices of $S$ we have $\text{tr}\ Y'XT=\|XT\|_\tau$, and all choices of $S$ give the same update and the same loss function value.
 
-In most factor analytic applications we have $n>>m$. The computations 
-in \eqref{eq-als1} and \eqref{eq-als2} use the matrices $X$ and $Y$, which each
-have $n$ rows. Every iteration involves multiplications with these
-potentially very large matrices. This will tend to be 
-expensive computationally. It has been pointed out by @adachi_12
-that we can rewrite the ALS algorithm in such a way that it only 
-involves matrices of order $m$. This alternative derivation of
-the algorithm has the additional property that it can be
-applied to $C$ without having to know $X$, which has obvious
-advantages in secondary analysis. And computational factor analysis 
-publications typically have
-secondary analyses examples, using the mountain of correlation matrices 
-that have been published since 1900.
+In most factor analytic applications we have $n>>m$. The computations in \eqref{eq-als1} and \eqref{eq-als2} use the matrices $X$ and $Y$, which each have $n$ rows. Every iteration involves multiplications with these potentially very large matrices. This will tend to be expensive computationally. It has been pointed out by @adachi_12 that we can rewrite the ALS algorithm in such a way that it only involves matrices of order $m$. This alternative derivation of the algorithm has the additional property that it can be applied to $C$ without having to know $X$, which has obvious advantages in secondary analysis. And computational factor analysis publications typically have secondary analyses examples, using the mountain of correlation matrices that have been published since 1900.
 
 ::: {#thm-als}
-Suppose $T$ has rank $m$. Then the update is
-\begin{equation}
+Suppose $T$ has rank $m$. Then the update is \begin{equation}
 T\leftarrow\Pi_{\mathcal{T}}\{CT(T'CT)^{-1/2}\}.\label{eq-alsshort}
 \end{equation}
 :::
-::: {.proof}
-We rewrite \eqref{eq-yopt} as
-\begin{equation}
+
+::: proof
+We rewrite \eqref{eq-yopt} as \begin{equation}
 Y=XT(T'CT)^{-1/2}+K_\perp^{\ } SL_\perp'
-\end{equation}
-where $(T'CT)^{-1/2}$ is the square root of the Moore-Penrose inverse of 
-$T'CT$, $K_\perp$ and $L_\perp$ are orthonormal bases for the left and right null
-spaces of $XT$, and $S$ is arbitrary.
-\begin{equation}
+\end{equation} where $(T'CT)^{-1/2}$ is the square root of the Moore-Penrose inverse of $T'CT$, $K_\perp$ and $L_\perp$ are orthonormal bases for the left and right null spaces of $XT$, and $S$ is arbitrary. \begin{equation}
 T\leftarrow\Pi_{\mathcal{T}}(X'Y)=\Pi_{\mathcal{T}}\left\{CT(T'CT)^{-\frac12}+X'K_\perp^{\ } SL_\perp'\right\}
-\end{equation}
-We have $K_\perp'XT=0$. If $T$ has rank $m$ then @cor-unique implies
-$X'K_\perp=0$ which leads to the result in the theorem.
+\end{equation} We have $K_\perp'XT=0$. If $T$ has rank $m$ then @cor-unique implies $X'K_\perp=0$ which leads to the result in the theorem.
 :::
 
-Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which means finding the $m$ non-zero eigenvalues and their corresponding eigenvectors. The update is then projected on the set $\mathcal{T}$. 
+Algorithm \eqref{eq-alsshort} requires us to compute $(T'CT)^{-\frac12}$ in each iteration, which means finding the $m$ non-zero eigenvalues and their corresponding eigenvectors. The update is then projected on the set $\mathcal{T}$.
 
 Alternative: polar decomposition iterative
 
-The ALS interpretation of the
-algorithm shows directly that a decreasing sequence of loss function values is produced, which
-proves convergence of $T$ under the usual identification and rank conditions.
+The ALS interpretation of the algorithm shows directly that a decreasing sequence of loss function values is produced, which proves convergence of $T$ under the usual identification and rank conditions.
 
-Since $\phi(T):=\|XT\|_\tau$ is convex and homogeneous in $T$
-the algorithm \eqref{eq-fixedp} is also a majorization (or MM) algorithm (@deleeuw_C_94c, @lange_16). To show this, 
-it follows from convexity that for all $T$ and $\overline T$ we have $\phi(T)\geq\text{tr}\ T'\overline G$, where $\overline G$ is any element of the subdifferential $\partial\phi(\overline T)$. Thus
-\begin{equation}
+Since $\phi(T):=\|XT\|_\tau$ is convex and homogeneous in $T$ the algorithm \eqref{eq-fixedp} is also a majorization (or MM) algorithm (@deleeuw_C_94c, @lange_16). To show this, it follows from convexity that for all $T$ and $\overline T$ we have $\phi(T)\geq\text{tr}\ T'\overline G$, where $\overline G$ is any element of the subdifferential $\partial\phi(\overline T)$. Thus \begin{equation}
 \sigma_\star(T)\leq\text{tr}\ C+\text{tr}\ T'T-2\ \text{tr}\ T'\overline G=\text{tr}\ C+\text{SSQ}(T-\overline G)+\text{SSQ}(\overline G),
-\end{equation}
-with equality if $T=\overline T$. Since $\|XT\|_\tau=\max_{Y'Y=I}\text{tr}\ Y'XT$ it follows from the theorem about subgradients of linear transformations (@rockafellar_70, theorem 23.9) and the theorem about subgradients of supremum functions (@mordukhovich_nam_22, section 4.4) that
-\begin{equation}
+\end{equation} with equality if $T=\overline T$. Since $\|XT\|_\tau=\max_{Y'Y=I}\text{tr}\ Y'XT$ it follows from the theorem about subgradients of linear transformations (@rockafellar_70, theorem 23.9) and the theorem about subgradients of supremum functions (@mordukhovich_nam_22, section 4.4) that \begin{equation}
 \partial\phi(T)=X'(KL'+K_\perp \overline{\text{co}}(\mathcal{S})L_\perp')
-\end{equation}
-where $K$ and $L$ refer to the SVD of $XT$, where $\mathcal{S}$ is the Stiefel manifold of all $S$ with
-$S'S=I$, and where $\overline{\text{co}}()$ is the closed convex hull. Finally (@watson_92b, @gallivan_absil_10)
-$\overline{\text{co}}(\mathcal{S})$ is the compact convex set $\mathcal{H}$ of all matrices with largest singular value less than or equal to one. Thus
-\begin{equation}
+\end{equation} where $K$ and $L$ refer to the SVD of $XT$, where $\mathcal{S}$ is the Stiefel manifold of all $S$ with $S'S=I$, and where $\overline{\text{co}}()$ is the closed convex hull. Finally (@watson_92b, @gallivan_absil_10) $\overline{\text{co}}(\mathcal{S})$ is the compact convex set $\mathcal{H}$ of all matrices with largest singular value less than or equal to one. Thus \begin{equation}
 T\leftarrow\Pi_{\mathcal{T}}(\partial\phi(T))=\Pi_{\mathcal{T}}(X'(KL'+K_\perp HL_\perp')),
-\end{equation}
-with $H\in\mathcal{H}$ is a convergent MM algorithm. Since $\mathcal{H}$ is larger than $\mathcal{S}$
-this extends Algorithm B. On the other hand as long as $T$ has rank $m$ 
-$K_\perp'XT=0$ implies $X'K_\perp=0$, as in @cor-unique, and thus in that case the MM algorithm 
-iterates the determinate part $KL'$ and is identical to Algorithm B.
+\end{equation} with $H\in\mathcal{H}$ is a convergent MM algorithm. Since $\mathcal{H}$ is larger than $\mathcal{S}$ this extends Algorithm B. On the other hand as long as $T$ has rank $m$ $K_\perp'XT=0$ implies $X'K_\perp=0$, as in @cor-unique, and thus in that case the MM algorithm iterates the determinate part $KL'$ and is identical to Algorithm B.
 
 If $XT$ has rank $m$ then $\mathcal{D}\phi(T)=X'KL'$
 
-
 In Algorithm A we compute the determinate part of $Y$, and optionally after convergence a proper orthonormal $Y$. In Algorithm B there is no $Y$ at all, and if there is no $X$ we cannot compute factor scores. In both cases finding appropiate (indeterminate) factor scores $Y$ requires additional work, not unlike what must be done in the MINRES or ML techniques for CFA. One option is to simply compute the optimal $T$ and then use one of the various classical methods to compute factor scores (@mcdonald_burr_67).
-
-
 
 ## Algorithm C
 
-The minimum of $\sigma(Y,T)$ over $Y'Y=I$ is
-\begin{align}
+The minimum of $\sigma(Y,T)$ over $Y'Y=I$ is \begin{align}
 \sigma_\star(T):=&\text{tr}\ X'X+\text{tr}\ T'T-2\ \|XT\|_\tau\notag\\=&\text{tr}\ X'X+\text{tr}\ T'T-2\ \sum_{\nu=1}^m\lambda_\nu^\frac12(T'CT).\label{eq-projloss}
-\end{align}
-First and second derivatives of the trace norm with respect to $T$ were computed in @deleeuw_E_25d. The gradient is
-\begin{equation}
+\end{align} First and second derivatives of the trace norm with respect to $T$ were computed in @deleeuw_E_25d. The gradient is \begin{equation}
 \mathcal{D}\sigma_\star(T)=2\{T-CT(T'CT)^{-1/2}\}.\label{eq-projgradsig}
-\end{equation}
-Thus the exploratory iterative algorithm
-\begin{equation}
+\end{equation} Thus the exploratory iterative algorithm \begin{equation}
 T\leftarrow CT(T'CT)^{-1/2}\label{eq-fixedp}
-\end{equation}
-is a fixed-point algorithm, and $T\in\mathcal{T}$ is a fixed point of \eqref{eq-fixedp} if and only if $\mathcal{D}\sigma_\star(T)=0$.
+\end{equation} is a fixed-point algorithm, and $T\in\mathcal{T}$ is a fixed point of \eqref{eq-fixedp} if and only if $\mathcal{D}\sigma_\star(T)=0$.
 
-
-
-If the problem is defined in such a way that some elements of $T$ are fixed, usually at zero, then the gradient is still the same, but with the understanding that the fixed elements
-get derivatives equal to zero. In other words there is a binary $m\times p$ matrix $B$ such that
-$T\in\mathcal{T}$ if and only if $B*T=T$, using symbol $*$ for the elementwise (or Hadamard) product.
-For constraints of this type the gradient is
-\begin{equation}
+If the problem is defined in such a way that some elements of $T$ are fixed, usually at zero, then the gradient is still the same, but with the understanding that the fixed elements get derivatives equal to zero. In other words there is a binary $m\times p$ matrix $B$ such that $T\in\mathcal{T}$ if and only if $B*T=T$, using symbol $*$ for the elementwise (or Hadamard) product. For constraints of this type the gradient is \begin{equation}
 \mathcal{D}\sigma_\star(T)=B*\{T-CT(T'CT)^{-1/2}\}.\label{eq-projgradtemp}
-\end{equation}
-With this formula for the gradient many general purpose optimization methods for minimizing the projected loss function \eqref{eq-projloss} become available. The R function mdfaAlgorithmG() in the repository uses the BFGS method of the optim() function from the stats package (@r_core_team_25).
+\end{equation} With this formula for the gradient many general purpose optimization methods for minimizing the projected loss function \eqref{eq-projloss} become available. The R function mdfaAlgorithmG() in the repository uses the BFGS method of the optim() function from the stats package (@r_core_team_25).
 
-
-Compared with Algorithm B we can perhaps expect some gain in efficiency, because of the
-superlinear convergence of the BFGS method, but we lose some flexibility by not having
-the general projections $\Pi_{\mathcal{T}}()$ available.
+Compared with Algorithm B we can perhaps expect some gain in efficiency, because of the superlinear convergence of the BFGS method, but we lose some flexibility by not having the general projections $\Pi_{\mathcal{T}}()$ available.
 
 box constraints
-
 
 ## Algorithm D
 
@@ -910,82 +673,39 @@ $\mathcal{D}\phi(T)=X'KL'$
 
 Algorithm B: $T-\Pi_T(X'KL')=T-\Pi_T(CT(T'CT)^{-\frac12}) =0$
 
-In Algorithms A and B the projection $\Pi_{\mathcal{T}}()$ can be quite general. Algorithm $F$ uses the binary template $B$ to encode fixed and variable elements, and projection is just elementwise multiplication with the
-template. We can get more generality by defining $\mathcal{T}$ as the set of matrices of the form
-\begin{equation}
+In Algorithms A and B the projection $\Pi_{\mathcal{T}}()$ can be quite general. Algorithm $F$ uses the binary template $B$ to encode fixed and variable elements, and projection is just elementwise multiplication with the template. We can get more generality by defining $\mathcal{T}$ as the set of matrices of the form \begin{equation}
 T=T_0+\sum_{s=1}^h\theta_s T_s,\label{eq-sumpar}
-\end{equation}
-which allows for patterns with some elements fixed to known values but also allows some elements required to be equal to other elements. Fixed elements go into $T_0$ and the $T_s$ with $s>0$
-have zeroes where the fixed elements are. If the fixed
-elements are all fixed to zero, as they are in exploratory
-CFA, there is no need for a $T_0$. If \eqref{eq-sumpar} is combined with non-negativity restrictions on the
-$\theta_s$ then we can also incorporate inequality between the elements of $T$, i.e. $\mathcal{T}$ can be a polyhedral convex cone.
+\end{equation} which allows for patterns with some elements fixed to known values but also allows some elements required to be equal to other elements. Fixed elements go into $T_0$ and the $T_s$ with $s>0$ have zeroes where the fixed elements are. If the fixed elements are all fixed to zero, as they are in exploratory CFA, there is no need for a $T_0$. If \eqref{eq-sumpar} is combined with non-negativity restrictions on the $\theta_s$ then we can also incorporate inequality between the elements of $T$, i.e. $\mathcal{T}$ can be a polyhedral convex cone.
 
-For the parametrization \eqref{eq-sumpar}
-\begin{equation}
+For the parametrization \eqref{eq-sumpar} \begin{equation}
 \mathcal{D}_s\sigma_\star(T)=\text{tr}\ T'T_s-\text{tr}\ (T'CT)^{-1/2}T'CT_s.\label{eq-derstar}
 \end{equation}
 
-The derivatives of the loss function \eqref{eq-derstar} with respect to the parameters $\theta_s$ are most easily expressed by first computing the derivatives of the eigenvalues of $T'CT$.
-\begin{equation}
+The derivatives of the loss function \eqref{eq-derstar} with respect to the parameters $\theta_s$ are most easily expressed by first computing the derivatives of the eigenvalues of $T'CT$. \begin{equation}
 \mathcal{D}_s\lambda_\nu=x_\nu'Q_sx_\nu,\label{eq-mdfadl}
-\end{equation}
-where $Q_s:=T_s'CT+T'CT_s$. It follows that
-\begin{equation}
+\end{equation} where $Q_s:=T_s'CT+T'CT_s$. It follows that \begin{equation}
 \mathcal{D}_{st}\lambda_\nu=-2x_\nu'Q_s(A-\lambda_\nu I)^+Q_tx_\nu+2x_\nu'T_s'CT_tx_\nu.\label{eq-mdfaddl}
 \end{equation}
 
 ## Algorithm E
 
-An MDFA procedure $X\rightarrow(Y,T)$ maps data matrices
-$X$ to a scores $Y$ and loadings $T$. The
-procedure is scale-free if for all diagonal $\Phi$
-we have $X\Phi\rightarrow(Y,T\Phi)$. Because of the
-uncertainly of appropriate units for the variables
-it is generally thought that scale-freeness is a
-desirable property of multivariate technique. 
+An MDFA procedure $X\rightarrow(Y,T)$ maps data matrices $X$ to a scores $Y$ and loadings $T$. The procedure is scale-free if for all diagonal $\Phi$ we have $X\Phi\rightarrow(Y,T\Phi)$. Because of the uncertainly of appropriate units for the variables it is generally thought that scale-freeness is a desirable property of multivariate technique.
 
-The MDFA least squares
-techniques we have discussed so far are not scale-free, but 
-they can be made scale-free in various ways.
-The first way is a traditional one. We normalize the data
-in $X$ to unit length, so that $C=X'X$ becomes a
-correlation matrix. This can be formalized as 
-minimizing
-$$
+The MDFA least squares techniques we have discussed so far are not scale-free, but they can be made scale-free in various ways. The first way is a traditional one. We normalize the data in $X$ to unit length, so that $C=X'X$ becomes a correlation matrix. This can be formalized as minimizing $$
 \sigma_W(T,Y):=\text{tr}\ (X-YT')W(X'-TY')
-$$
-with $W:=\text{diag}^{-1}(C)$. @adachi_12
-proposes instead to use $\smash{W=C^{-1}}$.
-But no matter how we choose the positive definite
-$W$ the computational consequences are
-easy to handle.
+$$ with $W:=\text{diag}^{-1}(C)$. @adachi_12 proposes instead to use $\smash{W=C^{-1}}$. But no matter how we choose the positive definite $W$ the computational consequences are easy to handle.
 
-We have
-\begin{equation}
+We have \begin{equation}
 \sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ (T-X'Y)'W(T-X'Y)-\text{tr}\ Y'XWX'Y,
-\end{equation}
-and consequently the optimal $T$ for given $Y$ is the
-projection in the metric $W$ of $X'Y$ on $\mathcal{T}$.
-This may or may not be more complicated than unweighted
-projection, depending on the definition of $\mathcal{T}$.
+\end{equation} and consequently the optimal $T$ for given $Y$ is the projection in the metric $W$ of $X'Y$ on $\mathcal{T}$. This may or may not be more complicated than unweighted projection, depending on the definition of $\mathcal{T}$.
 
-Also
-\begin{equation}
+Also \begin{equation}
 \sigma_W(T,Y)=\text{tr}\ XWX'+\text{tr}\ T'WT-2\ \text{tr}\ Y'XWT,
-\end{equation}
-which means the optimal $Y$ for given $T$ is the 
-(unweighted) projection of $XWT$ on the orthonormal 
-$n\times p$ matrices.
+\end{equation} which means the optimal $Y$ for given $T$ is the (unweighted) projection of $XWT$ on the orthonormal $n\times p$ matrices.
 
-As in the unweighted case we can combine the two ALS
-steps into a one-step upgrade for $T$.
-\begin{equation}
+As in the unweighted case we can combine the two ALS steps into a one-step upgrade for $T$. \begin{equation}
 T\leftarrow\Pi_{\mathcal{T}}(CWT(T'WCWT)^{-1/2}).\label{eq-weightupdate}
-\end{equation}
-Algorithm $W$ is the version of Algorithm B that uses the update in \eqref{eq-weightupdate}.
-Of course it does need a weighted projection routine implementing $\Pi_{\mathcal{T}}()$.
-For exploratory 
+\end{equation} Algorithm $W$ is the version of Algorithm B that uses the update in \eqref{eq-weightupdate}. Of course it does need a weighted projection routine implementing $\Pi_{\mathcal{T}}()$. For exploratory
 
 \sectionbreak
 
@@ -993,31 +713,29 @@ For exploratory
 
 ## MacDonell
 
-Our first example illustrates and compares several techniques for exploratory CFA. The example is of some historical interest. The data are one of the first published
-correlation matrices, from the very first volume of Biometrika.
-@macdonell_02, a retired businessman volunteering in Karl Pearson's lab,
-analyzed the politically incorrect 
-correlations between seven physical characteristics of 3000 criminals. 
+Our first example illustrates and compares several techniques for exploratory CFA. The example is of some historical interest. The data are one of the first published correlation matrices, from the very first volume of Biometrika. @macdonell_02, a retired businessman volunteering in Karl Pearson's lab, analyzed the politically incorrect correlations between seven physical characteristics of 3000 criminals.
+
 ```{r macddata, echo = FALSE}
 matrixPrint(macdonell, digits = 5, width = 7, flag = "")
 ```
-MacDonell mentions that Pearson advised him to use principal component analysis
-to find numerical indices that could be used to rank and classify criminals.
-He promises the PCA results in a follow-up paper, which never appeared (I think). 
-It was probably too early for PCA, which was brand new at the time (@pearson_01).
 
-We will compute two-factor exploratory MDFA, ULS, and ML solutions. To compare them
-we rotate the loadings of all three so that $A'D^{-2}A$ is diagonal.
+MacDonell mentions that Pearson advised him to use principal component analysis to find numerical indices that could be used to rank and classify criminals. He promises the PCA results in a follow-up paper, which never appeared (I think). It was probably too early for PCA, which was brand new at the time (@pearson_01).
+
+We will compute two-factor exploratory MDFA, ULS, and ML solutions. To compare them we rotate the loadings of all three so that $A'D^{-2}A$ is diagonal.
 
 ```{r macdcfa, echo = FALSE}
 mchb <- mdfaAlgorithmB(macdonell, mctold, mdfaCFAProjection, verbose = FALSE)
 mcgb <- mdfaConvertTtoAD(mchb$tmat)
 ```
-We cannot apply algorithm A here, because we do not have  the data matrix $X$, only the correlation matrix $C$. Algorithm B converges in `r mchb$itel` iterations. The loadings are
+
+We cannot apply algorithm A here, because we do not have the data matrix $X$, only the correlation matrix $C$. Algorithm B converges in `r mchb$itel` iterations. The loadings are
+
 ```{r macbloadings, echo = FALSE}
 matrixPrint(mcgb$loadings)
 ```
+
 and the uniquenesses are
+
 ```{r macbuniq, echo = FALSE}
 matrixPrint(mcgb$uniquenesses)
 ```
@@ -1025,13 +743,16 @@ matrixPrint(mcgb$uniquenesses)
 ```{r maclsfa, echo = FALSE}
 mchls <- lsfa(rep(.3, 7), macdonell, p = 2, iverbose = FALSE, jverbose = FALSE)
 ```
-The ULS algorithm uses 5 Thomson and 4 Newton iterations to minimize loss. Because of the Newton
-iterations the loss function values converged to 15 decimals precision. The loadings are
+
+The ULS algorithm uses 5 Thomson and 4 Newton iterations to minimize loss. Because of the Newton iterations the loss function values converged to 15 decimals precision. The loadings are
+
 ```{r maculoadings, echo = FALSE}
 row.names(mchls$a) <- row.names(macdonell)
 matrixPrint(mchls$a)
 ```
+
 and the uniquenesses are
+
 ```{r macuuniq, echo = FALSE}
 matrixPrint(mchls$d)
 ```
@@ -1039,8 +760,9 @@ matrixPrint(mchls$d)
 ```{r macmlfa, echo = FALSE}
 mchml <- factanal(NULL, 2, covmat = macdonell)
 ```
-Next we apply the maximum likelihood method, using factanal() from the stats package (@r_core_team_25).
-The loadings are
+
+Next we apply the maximum likelihood method, using factanal() from the stats package (@r_core_team_25). The loadings are
+
 ```{r maclloadings, echo = FALSE}
 anew <- mchml$loadings
 dnew <- mchml$uniquenesses
@@ -1050,29 +772,35 @@ anew <- -anew %*% mvc
 row.names(anew) <- row.names(macdonell)
 matrixPrint(anew)
 ```
+
 and the uniquenesses are
+
 ```{r macluniq, echo = FALSE}
 matrixPrint(dnew)
 ```
 
-Because the data are already a correlation matrix Algorithm W with weights $\text{diag(C)}$ gives the same result as the unweighted Algorithm B. But choosing weights $C^{-1}$  
+Because the data are already a correlation matrix Algorithm W with weights $\text{diag(C)}$ gives the same result as the unweighted Algorithm B. But choosing weights $C^{-1}$
+
 ```{r macdcfaw, echo = FALSE}
 mchbw <- mdfaAlgorithmW(macdonell, mcwful, mctold, mdfaCFAWProjection)
 mcgbw <- mdfaConvertTtoAD(mchbw$tmat)
 ```
+
 Algorithm B converges in `r mchbw$itel` iterations. The loadings are
+
 ```{r macbwloadings, echo = FALSE}
 matrixPrint(mcgbw$loadings)
 ```
+
 and the uniquenesses are
+
 ```{r macbwuniq, echo = FALSE}
 matrixPrint(mcgbw$uniquenesses)
 ```
 
 ## Emmett
 
-Our next example is the correlation matrix of order nine from 
-@emmett_49, also used in @lawley_maxwell_71, pp. 42-44. We use three common factors, and compare our results with those obtained using multinormal maximum likelihood (@lawley_maxwell_71, table 4.2). 
+Our next example is the correlation matrix of order nine from @emmett_49, also used in @lawley_maxwell_71, pp. 42-44. We use three common factors, and compare our results with those obtained using multinormal maximum likelihood (@lawley_maxwell_71, table 4.2).
 
 ```{r emmett, echo = FALSE}
 matrixPrint(emmett, digits = 3, width = 5, flag = "")
@@ -1084,39 +812,38 @@ hemmd <- mdfaAlgorithmB(emmett, emtold, itmax = 1000, verbose = FALSE)
 gemmd <- mdfaConvertTtoAD(hemmd$tmat)
 ```
 
-
-As the initial estimate for $A$ we use the first three
-principal components, scaled to the length of the corresponding eigenvalues. The initial estimate of $D$ is the square root of the diagonal of $I-AA'$. Algorithm B converges in `r hemmd$itel` iterations to a loss of `r hemmd$loss`, where convergence is defined
-by a loss-decrease in successive iterations of less than 
-`r 1e-10`. The MDFA uniquenesses are
+As the initial estimate for $A$ we use the first three principal components, scaled to the length of the corresponding eigenvalues. The initial estimate of $D$ is the square root of the diagonal of $I-AA'$. Algorithm B converges in `r hemmd$itel` iterations to a loss of `r hemmd$loss`, where convergence is defined by a loss-decrease in successive iterations of less than `r 1e-10`. The MDFA uniquenesses are
 
 ```{r alga_d, echo = FALSE}
 matrixPrint(gemmd$uniquenesses, digits = 3, width = 5, flag ="")
 ```
 
-We use factanal() from the stats package to compute the ML solution. 
+We use factanal() from the stats package to compute the ML solution.
 
 ```{r mlemmett, echo = FALSE}
 hemmm <- factanal(NULL, 3, covmat = emmett)
 ```
+
 The minimum function value and iteration information is
+
 ```{r ml_crit, echo = FALSE}
 hemmm$criteria
 ```
+
 The uniquenesses from the ML solution are
+
 ```{r ml_d, echo = FALSE}
 matrixPrint(hemmm$uniquenesses, digits = 3, width = 5, flag = "")
 ```
 
-Comparing loadings is slightly more involved. The ML solution
-is rotated so that $A'D^{-2}A$ is diagonal, so we rotate the 
-MDFA solution in the same way. The MDFA loadings are
+Comparing loadings is slightly more involved. The ML solution is rotated so that $A'D^{-2}A$ is diagonal, so we rotate the MDFA solution in the same way. The MDFA loadings are
 
 ```{r alga_a, echo = FALSE}
 matrixPrint(-gemmd$loadings, digits = 3, width = 5)
 ```
 
 The ML loadings are
+
 ```{r ml_a, echo = FALSE}
 a <- hemmm$loadings
 mat <- crossprod(a, diag(1 / hemmm$uniquenesses) %*% a)
@@ -1130,13 +857,8 @@ The Emmett example is somewhat atypical, because the CFA model with three factor
 halgg <- mdfaAlgorithmG(emmett, emtold, emtemp)
 ```
 
-The CFA solution computed by Algorithm G is identical to the Algorithm B solution. 
-Loss, with 10 digits, returned by Algorithm G is `r formatC(halgg$loss, digits = 10, format = "f")`,
-while Algorithm B gives `r formatC(hemmd$loss, digits = 10, format = "f")`. 
-Algorithm G requires `r halgg$counts[[1]]` function evaluations and `r halgg$counts[[2]]` gradient evaluations. Comparing running times with microbenchmark is somewhat
-problematic, because the default option in Algorithm B is to iterate until the function value
-decrease is less than `r 1e-10`. Algorithm G uses the default stopping criteria of the optim() function. 
-Comparing the default options gives
+The CFA solution computed by Algorithm G is identical to the Algorithm B solution. Loss, with 10 digits, returned by Algorithm G is `r formatC(halgg$loss, digits = 10, format = "f")`, while Algorithm B gives `r formatC(hemmd$loss, digits = 10, format = "f")`. Algorithm G requires `r halgg$counts[[1]]` function evaluations and `r halgg$counts[[2]]` gradient evaluations. Comparing running times with microbenchmark is somewhat problematic, because the default option in Algorithm B is to iterate until the function value decrease is less than `r 1e-10`. Algorithm G uses the default stopping criteria of the optim() function. Comparing the default options gives
+
 ```{r compo, eval = TRUE, echo = FALSE}
 suppressWarnings(h <- microbenchmark(
   mdfaAlgorithmB(emmett, emtold, itmax = 1000, verbose = FALSE),
@@ -1147,33 +869,31 @@ print(h)
 
 ## Maxwell
 
-Lawley and Maxwell give a second example, using data taken from
-@maxwell_61 (ten variables, 810 observations). This example illustrates what happens when ML converges to an improper solution (a.k.a. Heywood case). The correlation matrix is
+Lawley and Maxwell give a second example, using data taken from @maxwell_61 (ten variables, 810 observations). This example illustrates what happens when ML converges to an improper solution (a.k.a. Heywood case). The correlation matrix is
 
 ```{r maxwell, echo = FALSE}
 matrixPrint(maxwell, digits = 3, width = 5, flag = "")
 ```
+
 ```{r maxalgb, echo = FALSE, cache = TRUE}
 h <- mdfaAlgorithmB(maxwell, matold, itmax = 10000, verbose = FALSE)
 g <- mdfaConvertTtoAD(h$tmat)
 ```
-Algorithm B converges in `r h$itel`
-iterations to a loss of `r h$loss`. The MDFA uniquenesses are
+
+Algorithm B converges in `r h$itel` iterations to a loss of `r h$loss`. The MDFA uniquenesses are
+
 ```{r maxalgb_d, echo = FALSE}
 matrixPrint(g$uniquenesses, digits = 3, width = 5, flag ="")
 ```
+
 The uniquenesses from the ML solution in Lawley and Maxwell's Table 4.6 are
+
 ```{r maxml_d, echo = FALSE}
 maxmld <- c(.385, .623, .301, .638, .347, .778, .286, .000, .690, .600)
 matrixPrint(maxmld, digits = 3, width = 5, flag = "")
 ```
-Although the uniquenesses are close, there is an important difference between
-MDFA and ML. Obtaining the ML solution required manual intervention, because the
-four-factor solution was "improper". The uniqueness of variable 8 was judged to 
-be a Heywood case, and the analysis with repeated without variable 8. The final results
-identify the first factor with variable 8, so the loadings on the first factor
-are just the corresponding column of the correlation matrix. MDFA gives the same
-results without any manual intervention. The only consequence of the Heywood case is that more iterations are required to drive the uniqueness to zero.
+
+Although the uniquenesses are close, there is an important difference between MDFA and ML. Obtaining the ML solution required manual intervention, because the four-factor solution was "improper". The uniqueness of variable 8 was judged to be a Heywood case, and the analysis with repeated without variable 8. The final results identify the first factor with variable 8, so the loadings on the first factor are just the corresponding column of the correlation matrix. MDFA gives the same results without any manual intervention. The only consequence of the Heywood case is that more iterations are required to drive the uniqueness to zero.
 
 The MDFA loadings are, after suitable rotation,
 
@@ -1182,6 +902,7 @@ matrixPrint(g$loadings, digits = 3, width = 5)
 ```
 
 The ML loadings are
+
 ```{r maxml_a, echo = FALSE}
 maxml_a <- matrix(c(
   .188, .120, .186, .173, .129, .359, .448, 1.000, .429, .316,
@@ -1194,33 +915,39 @@ matrixPrint(maxml_a, digits = 3, width = 5)
 
 ## Tucker
 
-We continue with a simple confirmatory CFA example, with data from @tucker_58. This example was also
-analyzed with ML by @joreskog_69. There are nine variables, the first four and the last five in
-two different test batteries. 
+We continue with a simple confirmatory CFA example, with data from @tucker_58. This example was also analyzed with ML by @joreskog_69. There are nine variables, the first four and the last five in two different test batteries.
+
 ```{r tuckerdat, echo = FALSE}
 matrixPrint(tucker, digits = 3, width = 5, flag = "")
 ```
+
 Following earlier analysis we fit two general factors and two group factors, where the first group factor has only four non-zero loadings and the second one has five non-zero loadings.
+
 ```{r tuckerB, echo = FALSE}
 h <- mdfaAlgorithmB(tucker, tutold, tuckerProjection, verbose = FALSE, itmax = 10000)
 g <- mdfaConvertTtoAD(h$tmat, rotate = FALSE)
 loadings <- g$loadings
 uniquenesses <- g$uniquenesses
 ```
-Algorithm B takes `r h$itel` iterations to converge to loss `r h$loss`. Since the ML solution in @joreskog_69 is reported with
-two decimals precision we will do the same for the MDFA solution
-(although we have computed the solution to more than six decimals precision). The MDFA loadings are
+
+Algorithm B takes `r h$itel` iterations to converge to loss `r h$loss`. Since the ML solution in @joreskog_69 is reported with two decimals precision we will do the same for the MDFA solution (although we have computed the solution to more than six decimals precision). The MDFA loadings are
+
 ```{r tubloadings, echo = FALSE}
 matrixPrint(loadings, digits = 2)
 ```
+
 and the uniquenesses are
+
 ```{r tubuniq, echo = FALSE}
 matrixPrint(uniquenesses, digits = 2, width = 4, flag = "")
 ```
+
 The ML solution, taken from @joreskog_69, has uniquenesses
+
 ```{r tumluniq, echo = FALSE}
 matrixPrint(c(0.48, 0.41, 0.09, 0.31, 0.44, 0.46, 0.52, 0.32, 0.32), digits = 2, width = 4, flag = "")
 ```
+
 and loadings
 
 ```{r tumlloadings, echo = FALSE}
@@ -1231,9 +958,9 @@ tuml <- matrix(c(
   0, 0, 0, 0, .37, .15, .35, .02, -.12), 9, 4)
 matrixPrint(tuml, digits = 2)
 ```
-We see that the uniquenesses and the loadings on the group factors
-are almost identical, but the loadings on the two general factors look very different. But the loadings on the general factors are
-only identified up to a rotation. If we rotate the MDFA solution to a maximum match with the ML solution we find again an almost perfect correspondence. The rotated MDFA solution is
+
+We see that the uniquenesses and the loadings on the group factors are almost identical, but the loadings on the two general factors look very different. But the loadings on the general factors are only identified up to a rotation. If we rotate the MDFA solution to a maximum match with the ML solution we find again an almost perfect correspondence. The rotated MDFA solution is
+
 ```{r tumatch, echo = FALSE}
 tuml <- tuml[, 1:2]
 tuab <- loadings[, 1:2]
@@ -1244,31 +971,30 @@ matrixPrint(tuab %*% k, digits = 2)
 
 ## Cattell
 
-This example uses the correlation matrix between 12 cognitive variables from @cattell_63, included in the psych package (@revelle_25). It illustrates fitting general and group
-factors with correlated (oblique) factors.
+This example uses the correlation matrix between 12 cognitive variables from @cattell_63, included in the psych package (@revelle_25). It illustrates fitting general and group factors with correlated (oblique) factors.
 
 Variables 1 and 2 measures verbal ability, 3 and 4 are spatial ability, 5 and 6 are reasoning, 7 and 8 are numerical ability. The first eight are from the Thurstone Primary Abilities test, and the last four are from the (IPAT) Culture Fair Intelligence Test.
 
-We apply Algorithm B with 6 factors: one general factor and five group factors. The projection $\Pi_{\mathcal{A}}()$ copies all
-elements from the first column of $X'F$, elements one and two from column two, three and four from column three, five and six from column four, seven and eight from column five, and nine to twelve from column six. All other elements of $\Pi_{\mathcal{A}}(X'F)$ are zero, and $\Pi_{\mathcal{D}}(X'F)=\text{diag}(X'F)$ as usual.
+We apply Algorithm B with 6 factors: one general factor and five group factors. The projection $\Pi_{\mathcal{A}}()$ copies all elements from the first column of $X'F$, elements one and two from column two, three and four from column three, five and six from column four, seven and eight from column five, and nine to twelve from column six. All other elements of $\Pi_{\mathcal{A}}(X'F)$ are zero, and $\Pi_{\mathcal{D}}(X'F)=\text{diag}(X'F)$ as usual.
 
 ```{r cattell, echo = FALSE}
 h <- mdfaAlgorithmB(cattell, ctmat, cattellProjection, itmax = 1000, verbose = FALSE)
 g <- mdfaConvertTtoAD(h$tmat, rotate = FALSE)
 ```
+
 Algorithm B uses `r h$itel` iterations to converge to loss `r h$loss`. The loadings are
+
 ```{r cattella, echo = FALSE}
 matrixPrint(g$loadings, digits = 3, width = 5)
 ```
+
 and the uniquenesses are
+
 ```{r cattelld, echo = FALSE}
 matrixPrint(g$uniquenesses, digits = 3, width = 5, flag = "")
 ```
 
-For this example we can also compare Algorithm B with Algorithm
-G. The two algorithms give the same solution, with Algorithm G
-needing 67 function and 53 gradient evaluations. To compare
-speeds we use the microbenchmark package (@mersmann_24).
+For this example we can also compare Algorithm B with Algorithm G. The two algorithms give the same solution, with Algorithm G needing 67 function and 53 gradient evaluations. To compare speeds we use the microbenchmark package (@mersmann_24).
 
 ```{r catellbg, echo = FALSE}
 suppressWarnings(microbenchmark(
@@ -1276,19 +1002,10 @@ suppressWarnings(microbenchmark(
   mdfaAlgorithmG(cattell, ctmat, catemp)
 ))
 ```
-For this example there does not seem to be much difference, but
-there are several caveats. Both algorithms use their default
-values. For Algorithm B this means a maximum of 1000 iterations
-and a stop when the loss function changes less than `r 1e-10`
-from one iteration to the next. For Algorithm G the defaults are
-whatever the defaults of optim() are.
 
+For this example there does not seem to be much difference, but there are several caveats. Both algorithms use their default values. For Algorithm B this means a maximum of 1000 iterations and a stop when the loss function changes less than `r 1e-10` from one iteration to the next. For Algorithm G the defaults are whatever the defaults of optim() are.
 
-@rindskopf_rose_88 also compute a group factor analysis solution, but they allow for correlations between the five group factors. It seems as if allowing for oblique factors means that we replace the constraint $Y'Y=I$ by something more general. But instead we will keep $Y$ orthonormal and emulate oblique factors by suitable
-(non-linear) constraints on the loadings. Allowing for
-otherwise arbitrary correlations between the five group factors
-amounts to imposing the loadings structure
-$$
+@rindskopf_rose_88 also compute a group factor analysis solution, but they allow for correlations between the five group factors. It seems as if allowing for oblique factors means that we replace the constraint $Y'Y=I$ by something more general. But instead we will keep $Y$ orthonormal and emulate oblique factors by suitable (non-linear) constraints on the loadings. Allowing for otherwise arbitrary correlations between the five group factors amounts to imposing the loadings structure $$
 A=\begin{bmatrix}
 a_{11}&a_2&0&0&0&0\\
 a_{21}&0&a_3&0&0&0\\
@@ -1311,64 +1028,56 @@ a_{31}&a_4^{\ }r_4'\\
 a_{41}&a_5^{\ }r_5'\\
 a_{51}&a_6^{\ }r_6'
 \end{bmatrix}
-$$
-The vectors $r_j$ are all of length five, $a_2, a_3, a_4, a_5$ are of length two, and $a_6$ is of length four.
-This shows that $\Pi_{\mathcal{A}}()$ copies the first column of $X'F$ and computes five rank one approximations to the
-remaining blocks. This is not a linear projection, but one that is computationally still easy if we use
-the SVD of each block.
+$$ The vectors $r_j$ are all of length five, $a_2, a_3, a_4, a_5$ are of length two, and $a_6$ is of length four. This shows that $\Pi_{\mathcal{A}}()$ copies the first column of $X'F$ and computes five rank one approximations to the remaining blocks. This is not a linear projection, but one that is computationally still easy if we use the SVD of each block.
 
 ```{r cattellsvd, echo = FALSE}
 catsvd <- cattellSVDProjection(catold)
 h <- mdfaAlgorithmB(cattell, catsvd, cattellSVDProjection, itmax = 10000, verbose = FALSE)
 g <- cattellUnravel(h$tmat)
 ```
-Algorithm B with the nonlinear projections converges in
-`r h$itel` iterations to loss `r h$loss`.
-The loadings are
+
+Algorithm B with the nonlinear projections converges in `r h$itel` iterations to loss `r h$loss`. The loadings are
+
 ```{r cattellasvd, echo = FALSE}
 matrixPrint(g$loadings, digits = 3, width = 5)
 ```
+
 and the uniquenesses are
+
 ```{r cattelldsvd, echo = FALSE}
 matrixPrint(g$uniquenesses, digits = 3, width = 5, flag = "")
 ```
+
 The correlations between the factors are
+
 ```{r cattellrsvd, echo = FALSE}
 matrixPrint(g$correlations, digits = 3, width = 5)
 ```
-Our MDFA solution is very different from the ML solution reported
-by @rindskopf_rose_88. They found a Heywood case for variable
-four, we found a Heywood case for variable eleven. This discrepancy requires further analysis, but this paper is not the place for that.
 
-Note that the correlation matrix recovered by MDFA is always
-positive semi-definite, because it is of the form $RR'$.
-Also, even in these nonlinear cases, MDFA will never find
-negative uniquenesses, because the MDFA uniqueness are squares.
+Our MDFA solution is very different from the ML solution reported by @rindskopf_rose_88. They found a Heywood case for variable four, we found a Heywood case for variable eleven. This discrepancy requires further analysis, but this paper is not the place for that.
 
+Note that the correlation matrix recovered by MDFA is always positive semi-definite, because it is of the form $RR'$. Also, even in these nonlinear cases, MDFA will never find negative uniquenesses, because the MDFA uniqueness are squares.
 
 ## BFI
 
-In this example we use the BFI data from the psych package (@revelle_25). There are 2800
-subjects and 25 personality self report items. We use the impute() function from the
-e1071 package, with the mean option, to fill in the missing data (@meyer_dimitriadou_hornik_weingessel_leisch_24). In this example we can use
-mdfaAlgorithmA(), because the complete data matrix is available.
+In this example we use the BFI data from the psych package (@revelle_25). There are 2800 subjects and 25 personality self report items. We use the impute() function from the e1071 package, with the mean option, to fill in the missing data (@meyer_dimitriadou_hornik_weingessel_leisch_24). In this example we can use mdfaAlgorithmA(), because the complete data matrix is available.
+
 ```{r bfi, echo = FALSE, cache = TRUE}
 ha <- mdfaAlgorithmA(bfi, bftold, verbose = FALSE)
 hb <- mdfaAlgorithmB(cfi, bftold, verbose = FALSE)
 ```
+
 Algorithms A and B both require `r ha$itel` iterations to arrive at the same solution with loss `r ha$loss`.
 
 ```{r bfibench, echo = FALSE, cache = TRUE}
 suppressWarnings(microbenchmark(mdfaAlgorithmA(bfi, bftold, verbose = FALSE), mdfaAlgorithmB(cfi, bftold, verbose = FALSE)))
 ```
-The median execution time, as measured by the microbenchmark package (@mersmann_24), is 435.936128 milliseconds for Algorithm A and 5.39906 milliseconds for Algorithm B, which is consequently about 80 times faster. 
 
-
+The median execution time, as measured by the microbenchmark package (@mersmann_24), is 435.936128 milliseconds for Algorithm A and 5.39906 milliseconds for Algorithm B, which is consequently about 80 times faster.
 
 \sectionbreak
 
 # Discussion
-
 
 ## Statistical Considerations
 
@@ -1376,30 +1085,22 @@ $$
 \underline{x}_{ij}=\mathcal{N}(\mu_j+\sum f_{is}a_{js}+u_{ij}d_j, s^2)
 $$
 
-The consistency and asymptotic normality of the MDFA estimates
-has recently been studied by @terada_25.
+The consistency and asymptotic normality of the MDFA estimates has recently been studied by @terada_25.
 
-Now define $C:=X'X$ and for any square symmetric T use the notation
-$\lambda_s(T)$ for the ordered eigenvalues of $T$. Define
-$$
+Now define $C:=X'X$ and for any square symmetric T use the notation $\lambda_s(T)$ for the ordered eigenvalues of $T$. Define $$
 \sigma(A,C):=\text{tr}\ C+\text{tr}\ A'A-2\sum_{s=1}^m\sqrt{\lambda_s(A'CA)}
-$$
-Differentiate this with repect to $A$, assuming the eigenvalues
-are all different.
-$$
+$$ Differentiate this with repect to $A$, assuming the eigenvalues are all different. $$
 \mathcal{D}_1\sigma(A,C)=2\{A-CA(A'CA)^{-\frac12}\}
-$$
-Note that $\mathcal{D}_1\sigma(A,C)=0$ if $C=AA'$.
+$$ Note that $\mathcal{D}_1\sigma(A,C)=0$ if $C=AA'$.
 
-1. The minimizer $A(C)$ is a continuous function of $C$.
-2. The minimizer $A(C)$ is a differentiable function of $C$.
+1.  The minimizer $A(C)$ is a continuous function of $C$.
 
+2.  The minimizer $A(C)$ is a differentiable function of $C$.
 
-1. $\underline{C}_n$ converges weakly to $\Gamma=AA'$.
-2. $\smash{n^{-\frac12}(\underline{C}_n-\Gamma)}$ is asymptotically normal.
+3.  $\underline{C}_n$ converges weakly to $\Gamma=AA'$.
 
+4.  $\smash{n^{-\frac12}(\underline{C}_n-\Gamma)}$ is asymptotically normal.
 
 \sectionbreak
-
 
 # References
